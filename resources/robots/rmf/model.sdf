@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <sdf version="1.6">
-<model name="rmf_owl">
+<model name="rmf">
     <pose>0 0 0.121078 0 0 0</pose>
 
-    <frame name="rmf_owl" attached_to='base_link'>
+    <frame name="rmf" attached_to='base_link'>
         <pose>0 0 0 0 0 0</pose>
     </frame>
 
@@ -26,7 +26,7 @@
             <geometry>
                 <mesh>
                     <scale>1 1 1</scale>
-                    <uri>meshes/rmf_owl.dae</uri>
+                    <uri>meshes/rmf.dae</uri>
                 </mesh>
             </geometry>
         </collision>
@@ -35,7 +35,7 @@
             <geometry>
                 <mesh>
                     <scale>1 1 1</scale>
-                    <uri>meshes/rmf_owl.dae</uri>
+                    <uri>meshes/rmf.dae</uri>
                 </mesh>
             </geometry>
         </visual>
@@ -536,7 +536,7 @@
     </plugin>
 
     <plugin filename="libgz-sim-multicopter-motor-model-system.so" name="gz::sim::systems::MulticopterMotorModel">
-        <robotNamespace>model/rmf_owl</robotNamespace>
+        <robotNamespace>model/rmf</robotNamespace>
         <commandSubTopic>cmd/motor</commandSubTopic>
         <jointName>rotor_0_joint</jointName>
         <linkName>rotor_0</linkName>
@@ -555,7 +555,7 @@
     </plugin>
 
     <plugin filename="libgz-sim-multicopter-motor-model-system.so" name="gz::sim::systems::MulticopterMotorModel">
-        <robotNamespace>model/rmf_owl</robotNamespace>
+        <robotNamespace>model/rmf</robotNamespace>
         <commandSubTopic>cmd/motor</commandSubTopic>
         <jointName>rotor_1_joint</jointName>
         <linkName>rotor_1</linkName>
@@ -574,7 +574,7 @@
     </plugin>
 
     <plugin filename="libgz-sim-multicopter-motor-model-system.so" name="gz::sim::systems::MulticopterMotorModel">
-        <robotNamespace>model/rmf_owl</robotNamespace>
+        <robotNamespace>model/rmf</robotNamespace>
         <commandSubTopic>cmd/motor</commandSubTopic>
         <jointName>rotor_2_joint</jointName>
         <linkName>rotor_2</linkName>
@@ -593,7 +593,7 @@
     </plugin>
 
     <plugin filename="libgz-sim-multicopter-motor-model-system.so" name="gz::sim::systems::MulticopterMotorModel">
-        <robotNamespace>model/rmf_owl</robotNamespace>
+        <robotNamespace>model/rmf</robotNamespace>
         <commandSubTopic>cmd/motor</commandSubTopic>
         <jointName>rotor_3_joint</jointName>
         <linkName>rotor_3</linkName>
@@ -614,7 +614,7 @@
     <!-- <plugin filename="libgz-sim-multicopter-control-system.so" name="gz::sim::systems::MulticopterVelocityControl"> -->
     <!-- <plugin filename="libgz-sim-multicopter-position-control-system.so" name="gz::sim::systems::MulticopterPositionControl"> -->
     <plugin filename="libgz-sim-multicopter-attitude-control-system.so" name="gz::sim::systems::MulticopterAttitudeControl">
-        <robotNamespace>model/rmf_owl</robotNamespace>
+        <robotNamespace>model/rmf</robotNamespace>
         <commandSubTopic>cmd/att</commandSubTopic>
         <motorControlPubTopic>command/motor_speed</motorControlPubTopic>
         <enableSubTopic>enable</enableSubTopic>
@@ -665,7 +665,7 @@
     </plugin>
 
     <plugin filename="libgz-sim-multicopter-acceleration-control-system.so" name="gz::sim::systems::MulticopterAccelerationControl">
-        <robotNamespace>model/rmf_owl</robotNamespace>
+        <robotNamespace>model/rmf</robotNamespace>
         <commandSubTopic>cmd/acc</commandSubTopic>
         <motorControlPubTopic>command/motor_speed</motorControlPubTopic>
         <enableSubTopic>enable</enableSubTopic>
