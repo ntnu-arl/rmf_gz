@@ -15,13 +15,13 @@
         args="/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock">
     </node>
 
-    <!-- <node
+    <node
         pkg="ros_gz_bridge"
         exec="parameter_bridge"
         name="ros_gz_bridge_pose"
         args="/model/$(var robot_name)/pose@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V">
         <remap from="/model/$(var robot_name)/pose" to="/tf"/>
-    </node> -->
+    </node>
 
     <node
         pkg="ros_gz_bridge"

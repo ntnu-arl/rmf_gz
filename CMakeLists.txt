@@ -2,21 +2,17 @@ cmake_minimum_required(VERSION 3.8)
 project(rmf_gz)
 
 find_package(ament_cmake REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 
 install(
-  DIRECTORY launch/
-  DESTINATION share/${PROJECT_NAME}
+    DIRECTORY launch rviz resources
+    DESTINATION share/${PROJECT_NAME}
 )
-install(
-  DIRECTORY resources/
-  DESTINATION share/${PROJECT_NAME}/resources
+file(GLOB PY_SCRIPTS scripts/*.py)
+install(PROGRAMS
+  ${PY_SCRIPTS}
+  DESTINATION lib/${PROJECT_NAME}
 )
-
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/scripts")
-  install(DIRECTORY scripts/
-    DESTINATION lib/${PROJECT_NAME}
-    FILES_MATCHING PATTERN "*.py"
-  )
-endif()
 
 ament_package()

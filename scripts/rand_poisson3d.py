@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import xml.etree.ElementTree as ET
 import trimesh
 import numpy as np

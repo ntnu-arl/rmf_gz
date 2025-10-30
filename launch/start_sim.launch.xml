@@ -11,19 +11,19 @@
     <!-- robot parameters -->
     <arg name="robot_name" default="rmf"/>
     <arg name="robot_type" default="rmf"/>
-    <arg name="allow_renaming" default="true" />
-    <arg name="x" default="0" />
-    <arg name="y" default="0" />
-    <arg name="z" default="0.5" />
-    <arg name="R" default="0.0" />
-    <arg name="P" default="0.0" />
-    <arg name="Y" default="0.0" />
+    <arg name="allow_renaming" default="true"/>
+    <arg name="x" default="0"/>
+    <arg name="y" default="0"/>
+    <arg name="z" default="0.5"/>
+    <arg name="R" default="0.0"/>
+    <arg name="P" default="0.0"/>
+    <arg name="Y" default="0.0"/>
 
 
     <!-- spawn world -->
     <set_env name="GZ_SIM_RESOURCE_PATH" value="$(find-pkg-share rmf_gz)/resources/"/>
     <include file="$(find-pkg-share ros_gz_sim)/launch/gz_sim.launch.py">
-        <arg name="gz_args" value="-r -s -v $(var verbosity) worlds/$(var world).sdf"/>
+        <arg name="gz_args" value="-r -v $(var verbosity) worlds/$(var world).sdf"/>
     </include>
 
     <!-- spawn robot -->
@@ -36,18 +36,18 @@
     "/>
 
     <!-- topics -->
-    <include file="$(find-pkg-share rmf_gz)/topics.launch.xml">
-        <arg name="world" value="$(var world)" />
-        <arg name="robot_name" value="$(var robot_name)" />
-        <arg name="robot_type" value="$(var robot_type)" />
+    <include file="$(find-pkg-share rmf_gz)/launch/topics.launch.xml">
+        <arg name="world" value="$(var world)"/>
+        <arg name="robot_name" value="$(var robot_name)"/>
+        <arg name="robot_type" value="$(var robot_type)"/>
     </include>
 
     <!-- tf -->
     <node pkg="tf2_ros" exec="static_transform_publisher" name="tf_map_odom"
-    args="0 0 0 0 0 0 1 /map /$(var robot_name)/odom" />
-    <node pkg="tf2_ros" exec="static_transform_publisher" name="tf_depth_cam_optical" args="0 0 0 0.5 -0.5 0.5 -0.5 rmf/base_link/depth_cam rmf/base_link/depth_cam/optical" />
+    args="0 0 0 0 0 0 1 /map /$(var robot_name)/odom"/>
+    <node pkg="tf2_ros" exec="static_transform_publisher" name="tf_depth_cam_optical" args="0 0 0 0.5 -0.5 0.5 -0.5 rmf/base_link/depth_cam rmf/base_link/depth_cam/optical"/>
 
     <!-- rviz -->
-    <node pkg="rviz2" exec="rviz2"/>
+    <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share rmf_gz)/rviz/rmf_default.rviz"/>
 
 </launch>
