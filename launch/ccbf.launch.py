@@ -18,23 +18,23 @@ def generate_launch_description():
         Node(
             package='cbf_pc_selector',
             executable='pc_selector_node',
-            parameters=[{
-                'config': os.path.join(
+            parameters=[
+                os.path.join(
                     get_package_share_directory('cbf_pc_selector'),
                     'config', 'sim.yaml'
                 ),
-            }],
+            ],
             output='screen'
         ),
         Node(
             package='composite_cbf',
             executable='composite_cbf_node',
-            parameters=[{
+            parameters=[
                 os.path.join(
                     get_package_share_directory('composite_cbf'),
                     'config', 'sim.yaml'
                 ),
-            }],
+            ],
             remappings=[
                 ('~/obstacles', '/cbf_pc_selector/output_pc'),
                 ('~/cmd_in', '/pd_controller/cmd'),
