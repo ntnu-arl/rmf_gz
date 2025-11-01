@@ -5,11 +5,12 @@ import numpy as np
 import scipy as sp
 import os
 import copy
+from ament_index_python.packages import get_package_share_directory
 
 
-PATH_RESOURCES = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../resources')
-PATH_WORLDS = os.path.join(PATH_RESOURCES, 'worlds/')
-PATH_MODELS = os.path.join(PATH_RESOURCES, 'environment_assets/')
+PATH_RESOURCES = os.path.join(get_package_share_directory('rmf_gz'), 'resources')
+PATH_WORLDS = os.path.join(PATH_RESOURCES, 'worlds')
+PATH_MODELS = os.path.join(PATH_RESOURCES, 'environment_assets')
 
 
 ## generate random pose values
@@ -34,7 +35,7 @@ if __name__ == '__main__':
         raise ValueError('no <world> element found in the SDF file')
 
     ## add random obstacles
-    chunks_radius = [2] * 6
+    chunks_radius = [3] * 3
     seed = 1500
     poisson_domain_size = 8
     x_offset = 2 + poisson_domain_size / 2

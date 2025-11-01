@@ -4,11 +4,18 @@ from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import Node
 import os
 
+
 def generate_launch_description():
+    use_sim_time = LaunchConfiguration('use_sim_time')
+    
     return LaunchDescription([
+        DeclareLaunchArgument('use_sim_time', default_value='true'),
         Node(
             package="rmf_gz",
             executable="pd_controller.py",
+            parameters=[
+                {'use_sim_time': use_sim_time}
+            ],
             output="screen",
             remappings=[
                 ('~/odom', '/rmf/odom'),
@@ -23,6 +30,7 @@ def generate_launch_description():
                     get_package_share_directory('cbf_pc_selector'),
                     'config', 'sim.yaml'
                 ),
+                {'use_sim_time': use_sim_time}
             ],
             output='screen'
         ),
@@ -34,6 +42,7 @@ def generate_launch_description():
                     get_package_share_directory('composite_cbf'),
                     'config', 'sim.yaml'
                 ),
+                {'use_sim_time': use_sim_time}
             ],
             remappings=[
                 ('~/obstacles', '/cbf_pc_selector/output_pc'),

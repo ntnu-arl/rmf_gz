@@ -11,8 +11,8 @@ install(
 )
 file(GLOB PY_SCRIPTS scripts/*.py)
 install(PROGRAMS
-  ${PY_SCRIPTS}
-  DESTINATION lib/${PROJECT_NAME}
+    ${PY_SCRIPTS}
+    DESTINATION lib/${PROJECT_NAME}
 )
 
 ament_package()

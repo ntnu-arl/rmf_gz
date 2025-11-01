@@ -1,25 +1,25 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>rmf_gz</name>
-  <version>2.0.0</version>
-  <description>RMF Gazebo/ROS 2 simulation utilities and launch files.</description>
+    <name>rmf_gz</name>
+    <version>2.0.0</version>
+    <description>RMF Gazebo/ROS 2 simulation utilities and launch files.</description>
 
-  <maintainer email="martin.jacquet@ntnu.no">mjacquet</maintainer>
-  <license>TODO</license>
+    <maintainer email="martin.jacquet@ntnu.no">mjacquet</maintainer>
+    <license>TODO</license>
 
-  <buildtool_depend>ament_cmake</buildtool_depend>
+    <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <exec_depend>launch</exec_depend>
-  <exec_depend>launch_ros</exec_depend>
+    <exec_depend>launch</exec_depend>
+    <exec_depend>launch_ros</exec_depend>
 
-  <exec_depend>ros_gz_gazebo</exec_depend>
-  <exec_depend>ros_gz_bridge</exec_depend>
+    <exec_depend>ros_gz_gazebo</exec_depend>
+    <exec_depend>ros_gz_bridge</exec_depend>
 
-  <exec_depend>rclpy</exec_depend>
-  <exec_depend>geometry_msgs</exec_depend>
-  <exec_depend>nav_msgs</exec_depend>
+    <exec_depend>rclpy</exec_depend>
+    <exec_depend>geometry_msgs</exec_depend>
+    <exec_depend>nav_msgs</exec_depend>
 
-  <export>
+    <export>
     <build_type>ament_cmake</build_type>
-  </export>
+    </export>
 </package>
