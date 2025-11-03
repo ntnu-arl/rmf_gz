@@ -38,11 +38,11 @@ See [CONTROLLERS.md](CONTROLLERS.md) for detailed information about controller o
 
 Quick example:
 ```bash
-# Launch with acceleration controller (default)
-ros2 launch rmf_gz start_sim.launch.xml controller:=acceleration
-
-# Launch with attitude controller
+# Launch with attitude controller (default)
 ros2 launch rmf_gz start_sim.launch.xml controller:=attitude
+
+# Launch with acceleration controller
+ros2 launch rmf_gz start_sim.launch.xml controller:=acceleration
 ```
 
 ## content
