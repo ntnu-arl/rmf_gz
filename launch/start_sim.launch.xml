@@ -11,6 +11,7 @@
     <!-- robot parameters -->
     <arg name="robot_name" default="rmf"/>
     <arg name="robot_type" default="rmf"/>
+    <arg name="controller" default="attitude" description="Controller type: 'attitude' or 'acceleration'"/>
     <arg name="allow_renaming" default="true"/>
     <arg name="x" default="0"/>
     <arg name="y" default="0"/>
@@ -30,7 +31,7 @@
     <node pkg="ros_gz_sim" exec="create" name="spawn_model" args="
         -world map
         -name $(var robot_name)
-        -file robots/$(var robot_type)/model.sdf
+        -file robots/$(var robot_type)/model_$(var controller).sdf
         -x $(var x) -y $(var y) -z $(var z)
         -R $(var R) -P $(var P) -Y $(var Y)
     "/>

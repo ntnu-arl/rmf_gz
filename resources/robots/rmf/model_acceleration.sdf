@@ -613,9 +613,11 @@
 
     <!-- <plugin filename="libgz-sim-multicopter-control-system.so" name="gz::sim::systems::MulticopterVelocityControl"> -->
     <!-- <plugin filename="libgz-sim-multicopter-position-control-system.so" name="gz::sim::systems::MulticopterPositionControl"> -->
-    <plugin filename="libgz-sim-multicopter-attitude-control-system.so" name="gz::sim::systems::MulticopterAttitudeControl">
+    <!-- Attitude controller is not included in this model variant. Use model_attitude.sdf for attitude control. -->
+
+    <plugin filename="libgz-sim-multicopter-acceleration-control-system.so" name="gz::sim::systems::MulticopterAccelerationControl">
         <robotNamespace>model/rmf</robotNamespace>
-        <commandSubTopic>cmd/att</commandSubTopic>
+        <commandSubTopic>cmd/acc</commandSubTopic>
         <motorControlPubTopic>command/motor_speed</motorControlPubTopic>
         <enableSubTopic>enable</enableSubTopic>
         <comLinkName>base_link</comLinkName>
@@ -663,7 +665,5 @@
             </rotor>
         </rotorConfiguration>
     </plugin>
-
-
 </model>
 </sdf>
