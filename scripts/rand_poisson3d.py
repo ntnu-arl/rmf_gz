@@ -35,7 +35,7 @@ if __name__ == '__main__':
         raise ValueError('no <world> element found in the SDF file')
 
     ## add random obstacles
-    chunks_radius = [3] * 3
+    chunks_radius = [2.5] * 3
     seed = 1500
     poisson_domain_size = 8
     x_offset = 2 + poisson_domain_size / 2

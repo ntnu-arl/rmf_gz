@@ -4,9 +4,12 @@
     <set_parameter name="use_sim_time" value="true"/>
 
     <!-- world parameters -->
-    <arg name="verbosity"    default="4"/>
-    <arg name="world"        default="empty"/>
-    <arg name="headless"     default="true"/>
+    <arg name="verbosity" default="4"/>
+    <arg name="world" default="empty"/>
+    <arg name="rviz" default="false"/>
+    <arg name="headless" default="true"/>
+    <let name="headless_string" value="-s --headless-rendering" if="$(var headless)"/>
+    <let name="headless_string" value="" unless="$(var headless)"/>
 
     <!-- robot parameters -->
     <arg name="robot_name" default="rmf"/>
@@ -19,11 +22,10 @@
     <arg name="P" default="0.0"/>
     <arg name="Y" default="0.0"/>
 
-
     <!-- spawn world -->
     <set_env name="GZ_SIM_RESOURCE_PATH" value="$(find-pkg-share rmf_gz)/resources/"/>
     <include file="$(find-pkg-share ros_gz_sim)/launch/gz_sim.launch.py">
-        <arg name="gz_args" value="-r -v $(var verbosity) worlds/$(var world).sdf"/>
+        <arg name="gz_args" value="-r $(var headless_string) -v $(var verbosity) worlds/$(var world).sdf"/>
     </include>
 
     <!-- spawn robot -->
@@ -34,6 +36,12 @@
         -x $(var x) -y $(var y) -z $(var z)
         -R $(var R) -P $(var P) -Y $(var Y)
     "/>
+
+    <!-- point cloud to range image convertor -->
+    <node pkg="rmf_gz" exec="pc_to_range.py" name="pc_to_range" args="0 0 0 0 0 0 1 /map /$(var robot_name)/odom">
+         <remap from="~/img_out" to="/rmf/lidar/range" />
+         <remap from="~/pc_in" to="/rmf/lidar/points" />
+    </node>
 
     <!-- topics -->
     <include file="$(find-pkg-share rmf_gz)/launch/topics.launch.xml">
@@ -47,7 +55,6 @@
     <node pkg="tf2_ros" exec="static_transform_publisher" name="tf_depth_cam_optical" args="0 0 0 0.5 -0.5 0.5 -0.5 rmf/base_link/depth_cam rmf/base_link/depth_cam/optical"/>
 
     <!-- rviz -->
-    <!-- <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share rmf_gz)/rviz/rmf_default.rviz"/> -->
-    <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share sdf_nmpc_ros)/rviz/nmpc.rviz"/>
+    <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share rmf_gz)/rviz/rmf_default.rviz" if="$(var rviz)"/>
 
 </launch>
