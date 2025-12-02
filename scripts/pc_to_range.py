@@ -26,7 +26,8 @@ class Points2Img:
         self.vfov = vfov
 
     def __call__(self, pc: np.ndarray) -> np.ndarray:
-        img = np.ones(self.shape_imgs, dtype=float)
+        # img = np.ones(self.shape_imgs, dtype=float)
+        img = self.dmax * np.ones(self.shape_imgs, dtype=np.float32)
 
         r = np.linalg.norm(pc, axis=-1)
         mask = (r > 0) & (r < self.dmax)
@@ -36,29 +37,50 @@ class Points2Img:
 
         pc = pc[mask]
         r = r[mask]
-    
-        azimuth = np.arctan2(pc[:,1], pc[:,0])
-        elevation = np.arcsin(pc[:,2] / r)
 
-        ## mask out by range and bearing
-        mask = (azimuth >= -self.hfov / 2) & \
-            (azimuth <= self.hfov / 2) & \
-            (elevation >= -self.vfov / 2) & \
-            (elevation <= self.vfov / 2)
-        
-        if not mask.any():
-            return img
+        # ====================================================
     
-        pc = pc[mask]
-        r = r[mask] / self.dmax
-        azimuth = azimuth[mask]
-        elevation = elevation[mask]
+        # azimuth = np.arctan2(pc[:,1], pc[:,0])
+        # elevation = np.arcsin(pc[:,2] / r)
+
+        # ## mask out by range and bearing
+        # mask = (azimuth >= -self.hfov / 2) & \
+        #     (azimuth <= self.hfov / 2) & \
+        #     (elevation >= -self.vfov / 2) & \
+        #     (elevation <= self.vfov / 2)
         
-        ## binning
-        u = np.rint(0.5 * (-azimuth + self.hfov) / self.hfov * (self.width - 1)).astype(int)
-        v = np.rint(0.5 * (-elevation + self.vfov) / self.vfov * (self.height - 1)).astype(int)
+        # if not mask.any():
+        #     return img
+    
+        # pc = pc[mask]
+        # r = r[mask] / self.dmax
+        # azimuth = azimuth[mask]
+        # elevation = elevation[mask]
+        
+        # ## binning
+        # u = np.rint(0.5 * (-azimuth + self.hfov) / self.hfov * (self.width - 1)).astype(int)
+        # v = np.rint(0.5 * (-elevation + self.vfov) / self.vfov * (self.height - 1)).astype(int)
         # img[v, u] = np.min(img[u,v], r)
+
+        # ====================================================
+
+        azimuth = np.arctan2(pc[:,1], pc[:,0])  # Range: [-π, π]
+        elevation = np.arcsin(pc[:,2] / r)      # Range: [-π/4, π/4] for ±45° vertical
+
+        # Map full 360° azimuth to image width
+        # u = np.rint(((azimuth + np.pi) / (2 * np.pi)) * (self.width - 1)).astype(int)
+        u = np.rint(((-azimuth + self.hfov/2) / self.hfov) * (self.width - 1)).astype(int)
+
+        # Map ±π/4 elevation to image height (assuming symmetric vertical FOV)
+        v = np.rint(((elevation + self.vfov/2) / self.vfov) * (self.height - 1)).astype(int)
+
+        # ====================================================
+
         img[v, u] = r
+        img[img > self.dmax] = self.dmax
+        # img[img > self.dmax] = 0
+
+        img = np.flip(img, axis=0)
 
         return img
 
@@ -72,14 +94,18 @@ class PcToRangeNode(Node):
         self.declare_parameter('img_width', 512)
         self.declare_parameter('img_height', 128)
         self.declare_parameter('max_range', 10.0)
-        self.declare_parameter('hfov', 3.1415)
-        self.declare_parameter('vfov', 0.7853)
+        # self.declare_parameter('hfov', 3.1415)
+        # self.declare_parameter('vfov', 0.7853)
+        self.declare_parameter('hfov', 6.2831)
+        self.declare_parameter('vfov', 1.5707)
 
         img_width = int(self.get_parameter('img_width').value)
         img_height = int(self.get_parameter('img_height').value)
         max_range = float(self.get_parameter('max_range').value)
         hfov = float(self.get_parameter('hfov').value)
         vfov = float(self.get_parameter('vfov').value)
+
+        print("hfov:", hfov, "vfov:", vfov)
 
         self.pc2img = Points2Img([img_height, img_width], max_range, hfov, vfov)
 
@@ -100,18 +126,14 @@ class PcToRangeNode(Node):
         if len(pc):
             img = self.pc2img(pc)
 
-            from matplotlib import pyplot as plt
-            plt.imshow(img)
-            plt.show()
-
             msg_img = Image()
             msg_img.header = msg.header
             msg_img.height = img.shape[0]
             msg_img.width = img.shape[1]
             msg_img.encoding = '32FC1'
             msg_img.is_bigendian = 0
-            msg_img.step = img.shape[1] * 4
-            msg_img.data = img.tobytes(order='F')
+            msg_img.step = img.shape[1] * 4  # 4 bytes per float32
+            msg_img.data = img.tobytes()  # Default is 'C' order
             self.pub_img.publish(msg_img)
 
 
