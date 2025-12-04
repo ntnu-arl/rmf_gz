@@ -556,6 +556,82 @@
         <odom_publish_frequency>100</odom_publish_frequency>
     </plugin>
 
+    <!-- <plugin filename="libgz-sim-multicopter-motor-model-system.so" name="gz::sim::systems::MulticopterMotorModel">
+        <robotNamespace>model/rmf_unipilot</robotNamespace>
+        <commandSubTopic>cmd/motor</commandSubTopic>
+        <jointName>rotor_0_joint</jointName>
+        <linkName>rotor_0</linkName>
+        <turningDirection>ccw</turningDirection>
+        <timeConstantUp>0.0182</timeConstantUp>
+        <timeConstantDown>0.0182</timeConstantDown>
+        <maxRotVelocity>1000.0</maxRotVelocity>
+        <motorConstant>0.02246</motorConstant>
+        <momentConstant>0.016754</momentConstant>
+        <motorNumber>0</motorNumber>
+        <rotorDragCoefficient>2.0673e-04</rotorDragCoefficient>
+        <rollingMomentCoefficient>0</rollingMomentCoefficient>
+        <motorSpeedPubTopic>motor_speed/0</motorSpeedPubTopic>
+        <rotorVelocitySlowdownSim>0.5</rotorVelocitySlowdownSim>
+        <motorType>velocity</motorType>
+    </plugin>
+
+    <plugin filename="libgz-sim-multicopter-motor-model-system.so" name="gz::sim::systems::MulticopterMotorModel">
+        <robotNamespace>model/rmf_unipilot</robotNamespace>
+        <commandSubTopic>cmd/motor</commandSubTopic>
+        <jointName>rotor_1_joint</jointName>
+        <linkName>rotor_1</linkName>
+        <turningDirection>ccw</turningDirection>
+        <timeConstantUp>0.0182</timeConstantUp>
+        <timeConstantDown>0.0182</timeConstantDown>
+        <maxRotVelocity>1000.0</maxRotVelocity>
+        <motorConstant>0.02246</motorConstant>
+        <momentConstant>0.016754</momentConstant>
+        <motorNumber>1</motorNumber>
+        <rotorDragCoefficient>2.0673e-04</rotorDragCoefficient>
+        <rollingMomentCoefficient>0</rollingMomentCoefficient>
+        <motorSpeedPubTopic>motor_speed/1</motorSpeedPubTopic>
+        <rotorVelocitySlowdownSim>0.5</rotorVelocitySlowdownSim>
+        <motorType>velocity</motorType>
+    </plugin>
+
+    <plugin filename="libgz-sim-multicopter-motor-model-system.so" name="gz::sim::systems::MulticopterMotorModel">
+        <robotNamespace>model/rmf_unipilot</robotNamespace>
+        <commandSubTopic>cmd/motor</commandSubTopic>
+        <jointName>rotor_2_joint</jointName>
+        <linkName>rotor_2</linkName>
+        <turningDirection>cw</turningDirection>
+        <timeConstantUp>0.0182</timeConstantUp>
+        <timeConstantDown>0.0182</timeConstantDown>
+        <maxRotVelocity>1000.0</maxRotVelocity>
+        <motorConstant>0.02246</motorConstant>
+        <momentConstant>0.016754</momentConstant>
+        <motorNumber>2</motorNumber>
+        <rotorDragCoefficient>2.0673e-04</rotorDragCoefficient>
+        <rollingMomentCoefficient>0</rollingMomentCoefficient>
+        <motorSpeedPubTopic>motor_speed/2</motorSpeedPubTopic>
+        <rotorVelocitySlowdownSim>0.5</rotorVelocitySlowdownSim>
+        <motorType>velocity</motorType>
+    </plugin>
+
+    <plugin filename="libgz-sim-multicopter-motor-model-system.so" name="gz::sim::systems::MulticopterMotorModel">
+        <robotNamespace>model/rmf_unipilot</robotNamespace>
+        <commandSubTopic>cmd/motor</commandSubTopic>
+        <jointName>rotor_3_joint</jointName>
+        <linkName>rotor_3</linkName>
+        <turningDirection>cw</turningDirection>
+        <timeConstantUp>0.0182</timeConstantUp>
+        <timeConstantDown>0.0182</timeConstantDown>
+        <maxRotVelocity>1000.0</maxRotVelocity>
+        <motorConstant>0.02246</motorConstant>
+        <momentConstant>0.016754</momentConstant>
+        <motorNumber>3</motorNumber>
+        <rotorDragCoefficient>2.0673e-04</rotorDragCoefficient>
+        <rollingMomentCoefficient>0</rollingMomentCoefficient>
+        <motorSpeedPubTopic>motor_speed/3</motorSpeedPubTopic>
+        <rotorVelocitySlowdownSim>0.5</rotorVelocitySlowdownSim>
+        <motorType>velocity</motorType>
+    </plugin> -->
+
     <plugin filename="libgz-sim-multicopter-motor-model-system.so" name="gz::sim::systems::MulticopterMotorModel">
         <robotNamespace>model/rmf_unipilot</robotNamespace>
         <commandSubTopic>cmd/motor</commandSubTopic>
@@ -643,6 +719,57 @@
         <velocityGain>4 4 1.5</velocityGain>
         <attitudeGain>15.0 15.0 2.0</attitudeGain>
         <angularRateGain>2 2 0.75</angularRateGain>
+        <maximumLinearVelocity>5 5 5</maximumLinearVelocity>
+        <maximumLinearAcceleration>5 5 5</maximumLinearAcceleration>
+        <maximumAngularVelocity>5 5 3</maximumAngularVelocity>
+        <linearVelocityNoiseMean>0 0 0</linearVelocityNoiseMean>
+        <!-- linearVelocityNoiseStdDev based on error values reported in the paper Shen et. al., -->
+        <!-- Vision-Based State Estimation and Trajectory Control Towards High-Speed Flight with a Quadrotor -->
+        <!-- http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.490.7958&rep=rep1&type=pdf -->
+        <linearVelocityNoiseStdDev>0.1105 0.1261 0.0947</linearVelocityNoiseStdDev>
+        <angularVelocityNoiseMean>0 0 0</angularVelocityNoiseMean>
+        <!-- angularVelocityNoiseStdDev values based on ADIS16448's Rate Noise Density with a sample  -->
+        <!-- time of 0.004 ms. -->
+        <angularVelocityNoiseStdDev>0.004 0.004 0.004</angularVelocityNoiseStdDev>
+
+        <rotorConfiguration>
+            <rotor>
+                <jointName>rotor_0_joint</jointName>
+                <forceConstant>0.02246</forceConstant>
+                <momentConstant>1.6754e-2</momentConstant>
+                <direction>1</direction>
+            </rotor>
+            <rotor>
+                <jointName>rotor_1_joint</jointName>
+                <forceConstant>0.02246</forceConstant>
+                <momentConstant>1.6754e-2</momentConstant>
+                <direction>1</direction>
+            </rotor>
+            <rotor>
+                <jointName>rotor_2_joint</jointName>
+                <forceConstant>0.02246</forceConstant>
+                <momentConstant>1.6754e-2</momentConstant>
+                <direction>-1</direction>
+            </rotor>
+            <rotor>
+                <jointName>rotor_3_joint</jointName>
+                <forceConstant>0.02246</forceConstant>
+                <momentConstant>1.6754e-2</momentConstant>
+                <direction>-1</direction>
+            </rotor>
+        </rotorConfiguration>
+    </plugin>
+
+    <plugin filename="libgz-sim-multicopter-acceleration-control-system.so" name="gz::sim::systems::MulticopterAccelerationControl">
+        <robotNamespace>model/rmf_unipilot</robotNamespace>
+        <commandSubTopic>cmd/acc</commandSubTopic>
+        <motorControlPubTopic>command/motor_speed</motorControlPubTopic>
+        <enableSubTopic>enable</enableSubTopic>
+        <comLinkName>base_link</comLinkName>
+        <positionGain>0 0 0</positionGain>
+        <velocityGain>0 0 0</velocityGain>
+        <attitudeGain>15 15 2</attitudeGain>
+        <angularRateGain>2 2 0.2</angularRateGain>
         <maximumLinearVelocity>5 5 5</maximumLinearVelocity>
         <maximumLinearAcceleration>5 5 5</maximumLinearAcceleration>
         <maximumAngularVelocity>5 5 3</maximumAngularVelocity>
