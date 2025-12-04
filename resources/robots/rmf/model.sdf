@@ -198,7 +198,7 @@
         </sensor> -->
 
 
-        <!-- <visual name="laser_visual">
+        <visual name="laser_visual">
             <pose>0 0 0.05 0 0 0</pose>
             <geometry>
                 <cylinder>
@@ -206,7 +206,7 @@
                     <length>0.1</length>
                 </cylinder>
             </geometry>
-        </visual> -->
+        </visual>
         <sensor name="lidar" type="gpu_ray">
             <pose>0 0 0.05 0 0 0</pose>
             <always_on>1</always_on>
