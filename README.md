@@ -29,6 +29,22 @@ this repo contains minimal ROS2 launchfiles and resources for RMF simulation in 
 
 clone and install normally via colcon
 
+### controller selection
+
+The RMF model supports two controller types: **attitude** and **acceleration**. 
+Only one controller should be active at a time to avoid conflicts.
+
+See [CONTROLLERS.md](CONTROLLERS.md) for detailed information about controller options and usage.
+
+Quick example:
+```bash
+# Launch with attitude controller (default)
+ros2 launch rmf_gz start_sim.launch.xml controller:=attitude
+
+# Launch with acceleration controller
+ros2 launch rmf_gz start_sim.launch.xml controller:=acceleration
+```
+
 ## content
 
 ### models
