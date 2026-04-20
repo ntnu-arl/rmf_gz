@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <sdf version="1.6">
 <model name="rmf_unipilot">
+    <self_collide>true</self_collide>
     <pose>0 0 0.121078 0 0 0</pose>
 
     <frame name="rmf_unipilot" attached_to='base_link'>
@@ -11,7 +12,7 @@
         <pose frame="">0 0 0 0 -0 0</pose>
         <inertial>
             <pose frame="">0 0 0 0 -0 0</pose>
-            <mass>1.46</mass>
+            <mass>2.10</mass>
             <inertia>
                 <ixx>0.017</ixx>
                 <ixy>0</ixy>
@@ -24,13 +25,7 @@
         <collision name="base_link_inertia_collision">
             <pose frame="">0 0 0 0 -0 0</pose>
             <geometry>
-                <!-- <mesh>
-                    <scale>1 1 1</scale>
-                    <uri>meshes/rmf.dae</uri>
-                </mesh> -->
-                <box>
-                    <size>0.3 0.3 0.1</size>
-                </box>
+                <box><size>0.3 0.3 0.1</size></box>
             </geometry>
         </collision>
         <visual name="base_link_inertia_visual">
@@ -42,161 +37,6 @@
                 </mesh>
             </geometry>
         </visual>
-
-
-
-        <!-- sensors -->
-        <!-- <sensor name="imu" type="imu">
-            <always_on>1</always_on>
-            <update_rate>200</update_rate>
-            <imu>
-                <angular_velocity>
-                    <x>
-                        <noise type="gaussian">
-                            <mean>0</mean>
-                            <stddev>0.009</stddev>
-                            <bias_mean>0.00075</bias_mean>
-                            <bias_stddev>0.005</bias_stddev>
-                            <dynamic_bias_stddev>0.00002</dynamic_bias_stddev>
-                            <dynamic_bias_correlation_time>400.0</dynamic_bias_correlation_time>
-                            <precision>0.00025</precision>
-                        </noise>
-                    </x>
-                    <y>
-                        <noise type="gaussian">
-                            <mean>0</mean>
-                            <stddev>0.009</stddev>
-                            <bias_mean>0.00075</bias_mean>
-                            <bias_stddev>0.005</bias_stddev>
-                            <dynamic_bias_stddev>0.00002</dynamic_bias_stddev>
-                            <dynamic_bias_correlation_time>400.0</dynamic_bias_correlation_time>
-                            <precision>0.00025</precision>
-                        </noise>
-                    </y>
-                    <z>
-                        <noise type="gaussian">
-                            <mean>0</mean>
-                            <stddev>0.009</stddev>
-                            <bias_mean>0.00075</bias_mean>
-                            <bias_stddev>0.005</bias_stddev>
-                            <dynamic_bias_stddev>0.00002</dynamic_bias_stddev>
-                            <dynamic_bias_correlation_time>400.0</dynamic_bias_correlation_time>
-                            <precision>0.00025</precision>
-                        </noise>
-                    </z>
-                </angular_velocity>
-                <linear_acceleration>
-                    <x>
-                        <noise type="gaussian">
-                            <mean>0</mean>
-                            <stddev>0.021</stddev>
-                            <bias_mean>0.05</bias_mean>
-                            <bias_stddev>0.0075</bias_stddev>
-                            <dynamic_bias_stddev>0.000375</dynamic_bias_stddev>
-                            <dynamic_bias_correlation_time>175.0</dynamic_bias_correlation_time>
-                            <precision>0.005</precision>
-                        </noise>
-                    </x>
-                    <y>
-                        <noise type="gaussian">
-                            <mean>0</mean>
-                            <stddev>0.021</stddev>
-                            <bias_mean>0.05</bias_mean>
-                            <bias_stddev>0.0075</bias_stddev>
-                            <dynamic_bias_stddev>0.000375</dynamic_bias_stddev>
-                            <dynamic_bias_correlation_time>175.0</dynamic_bias_correlation_time>
-                            <precision>0.005</precision>
-                        </noise>
-                    </y>
-                    <z>
-                        <noise type="gaussian">
-                            <mean>0</mean>
-                            <stddev>0.021</stddev>
-                            <bias_mean>0.05</bias_mean>
-                            <bias_stddev>0.0075</bias_stddev>
-                            <dynamic_bias_stddev>0.000375</dynamic_bias_stddev>
-                            <dynamic_bias_correlation_time>175.0</dynamic_bias_correlation_time>
-                            <precision>0.005</precision>
-                        </noise>
-                    </z>
-                </linear_acceleration>
-            </imu>
-        </sensor>
-
-
-        <sensor name="magnetometer" type="magnetometer">
-            <always_on>1</always_on>
-            <update_rate>20</update_rate>
-            <magnetometer>
-                <x>
-                    <noise type="gaussian">
-                        <mean>0.000000080</mean>
-                        <bias_mean>0.000000400</bias_mean>
-                    </noise>
-                </x>
-                <y>
-                    <noise type="gaussian">
-                        <mean>0.000000080</mean>
-                        <bias_mean>0.000000400</bias_mean>
-                    </noise>
-                </y>
-                <z>
-                    <noise type="gaussian">
-                        <mean>0.000000080</mean>
-                        <bias_mean>0.000000400</bias_mean>
-                    </noise>
-                </z>
-            </magnetometer>
-        </sensor> -->
-
-
-        <!-- <sensor name="rgb_cam" type="camera">
-            <pose>0.180 0 -0.025 0 0 0</pose>
-            <always_on>1</always_on>
-            <update_rate>1</update_rate>
-            <camera name="rgb_cam">
-                <horizontal_fov>1.52</horizontal_fov>
-                <image>
-                    <width>480</width>
-                    <height>270</height>
-                    <format>R8G8B8</format>
-                </image>
-                <clip>
-                    <near>0.02</near>
-                    <far>20</far>
-                </clip>
-                <noise>
-                    <type>gaussian</type>
-                    <mean>0</mean>
-                    <stddev>0.007</stddev>
-                </noise>
-            </camera>
-        </sensor>
-
-
-        <sensor name="depth_cam" type="depth_camera">
-            <pose>0.180 0 -0.025 0 0 0</pose>
-            <always_on>1</always_on>
-            <update_rate>30</update_rate>
-            <camera name="depth_cam">
-                <horizontal_fov>1.52</horizontal_fov>
-                <image>
-                    <width>480</width>
-                    <height>270</height>
-                    <format>R_FLOAT32</format>
-                </image>
-                <clip>
-                    <near>0.02</near>
-                    <far>10</far>
-                </clip>
-                <noise>
-                    <type>gaussian</type>
-                    <mean>0</mean>
-                    <stddev>0.007</stddev>
-                </noise>
-            </camera>
-        </sensor> -->
-
 
         <visual name="laser_visual">
             <pose>-0.15 0 0.05 0 1.57 3.1416</pose>
@@ -227,26 +67,25 @@
                     </vertical>
                 </scan>
                 <range>
-                    <min>0.01</min>
+                    <min>0.18</min>
                     <max>100</max>
                     <resolution>0.005</resolution>
                 </range>
                 <noise>
                     <type>gaussian</type>
                     <mean>0</mean>
-                    <stddev>0.03</stddev>
+                    <stddev>0.001</stddev>
                 </noise>
             </lidar>
         </sensor>
-
-
-        <!-- <sensor name='contact' type='contact'>
-            <contact>
-                <collision>base_link_inertia_collision</collision>
-            </contact>
+        <sensor name="contact" type="contact">
             <always_on>1</always_on>
             <update_rate>50</update_rate>
-        </sensor> -->
+            <contact>
+                <collision>base_link_inertia_collision</collision>
+                <topic>/rmf_unipilot/contact</topic>
+            </contact>
+        </sensor>
     </link>
 
     <!-- rotors -->
@@ -638,8 +477,8 @@
         <jointName>rotor_0_joint</jointName>
         <linkName>rotor_0</linkName>
         <turningDirection>ccw</turningDirection>
-        <timeConstantUp>0.00182</timeConstantUp>
-        <timeConstantDown>0.00182</timeConstantDown>
+        <timeConstantUp>0.003</timeConstantUp>
+        <timeConstantDown>0.0018</timeConstantDown>
         <maxRotVelocity>750.0</maxRotVelocity>
         <motorConstant>0.02246</motorConstant>
         <momentConstant>0.016754</momentConstant>
@@ -657,8 +496,8 @@
         <jointName>rotor_1_joint</jointName>
         <linkName>rotor_1</linkName>
         <turningDirection>ccw</turningDirection>
-        <timeConstantUp>0.00182</timeConstantUp>
-        <timeConstantDown>0.00182</timeConstantDown>
+        <timeConstantUp>0.003</timeConstantUp>
+        <timeConstantDown>0.0018</timeConstantDown>
         <maxRotVelocity>750.0</maxRotVelocity>
         <motorConstant>0.02246</motorConstant>
         <momentConstant>0.016754</momentConstant>
@@ -676,8 +515,8 @@
         <jointName>rotor_2_joint</jointName>
         <linkName>rotor_2</linkName>
         <turningDirection>cw</turningDirection>
-        <timeConstantUp>0.00182</timeConstantUp>
-        <timeConstantDown>0.00182</timeConstantDown>
+        <timeConstantUp>0.003</timeConstantUp>
+        <timeConstantDown>0.0018</timeConstantDown>
         <maxRotVelocity>750.0</maxRotVelocity>
         <motorConstant>0.02246</motorConstant>
         <momentConstant>0.016754</momentConstant>
@@ -695,8 +534,8 @@
         <jointName>rotor_3_joint</jointName>
         <linkName>rotor_3</linkName>
         <turningDirection>cw</turningDirection>
-        <timeConstantUp>0.00182</timeConstantUp>
-        <timeConstantDown>0.00182</timeConstantDown>
+        <timeConstantUp>0.003</timeConstantUp>
+        <timeConstantDown>0.0018</timeConstantDown>
         <maxRotVelocity>750.0</maxRotVelocity>
         <motorConstant>0.02246</motorConstant>
         <momentConstant>0.016754</momentConstant>
@@ -708,8 +547,8 @@
         <motorType>velocity</motorType>
     </plugin>
 
+    <!--
     <plugin filename="libgz-sim-multicopter-control-system.so" name="gz::sim::systems::MulticopterVelocityControl">
-    <!-- <plugin filename="libgz-sim-multicopter-acceleration-control-system.so" name="gz::sim::systems::MulticopterAccelerationControl"> -->
         <robotNamespace>model/rmf_unipilot</robotNamespace>
         <commandSubTopic>cmd/vel</commandSubTopic>
         <motorControlPubTopic>command/motor_speed</motorControlPubTopic>
@@ -723,13 +562,8 @@
         <maximumLinearAcceleration>5 5 5</maximumLinearAcceleration>
         <maximumAngularVelocity>5 5 3</maximumAngularVelocity>
         <linearVelocityNoiseMean>0 0 0</linearVelocityNoiseMean>
-        <!-- linearVelocityNoiseStdDev based on error values reported in the paper Shen et. al., -->
-        <!-- Vision-Based State Estimation and Trajectory Control Towards High-Speed Flight with a Quadrotor -->
-        <!-- http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.490.7958&rep=rep1&type=pdf -->
         <linearVelocityNoiseStdDev>0.1105 0.1261 0.0947</linearVelocityNoiseStdDev>
         <angularVelocityNoiseMean>0 0 0</angularVelocityNoiseMean>
-        <!-- angularVelocityNoiseStdDev values based on ADIS16448's Rate Noise Density with a sample  -->
-        <!-- time of 0.004 ms. -->
         <angularVelocityNoiseStdDev>0.004 0.004 0.004</angularVelocityNoiseStdDev>
 
         <rotorConfiguration>
@@ -759,6 +593,7 @@
             </rotor>
         </rotorConfiguration>
     </plugin>
+    -->
 
     <plugin filename="libgz-sim-multicopter-acceleration-control-system.so" name="gz::sim::systems::MulticopterAccelerationControl">
         <robotNamespace>model/rmf_unipilot</robotNamespace>
@@ -768,20 +603,20 @@
         <comLinkName>base_link</comLinkName>
         <positionGain>0 0 0</positionGain>
         <velocityGain>0 0 0</velocityGain>
-        <attitudeGain>15 15 2</attitudeGain>
-        <angularRateGain>2 2 0.2</angularRateGain>
-        <maximumLinearVelocity>5 5 5</maximumLinearVelocity>
-        <maximumLinearAcceleration>5 5 5</maximumLinearAcceleration>
-        <maximumAngularVelocity>5 5 3</maximumAngularVelocity>
+        <attitudeGain>30 30 3</attitudeGain>
+        <angularRateGain>3 3 0.3</angularRateGain>
+        <maximumLinearVelocity>10 10 10</maximumLinearVelocity>
+        <maximumLinearAcceleration>30 30 30</maximumLinearAcceleration>
+        <maximumAngularVelocity>30 30 5</maximumAngularVelocity>
         <linearVelocityNoiseMean>0 0 0</linearVelocityNoiseMean>
         <!-- linearVelocityNoiseStdDev based on error values reported in the paper Shen et. al., -->
         <!-- Vision-Based State Estimation and Trajectory Control Towards High-Speed Flight with a Quadrotor -->
         <!-- http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.490.7958&rep=rep1&type=pdf -->
-        <linearVelocityNoiseStdDev>0.1105 0.1261 0.0947</linearVelocityNoiseStdDev>
+        <linearVelocityNoiseStdDev>0.00001 0.00001261 0.00000947</linearVelocityNoiseStdDev>
         <angularVelocityNoiseMean>0 0 0</angularVelocityNoiseMean>
         <!-- angularVelocityNoiseStdDev values based on ADIS16448's Rate Noise Density with a sample  -->
         <!-- time of 0.004 ms. -->
-        <angularVelocityNoiseStdDev>0.004 0.004 0.004</angularVelocityNoiseStdDev>
+        <angularVelocityNoiseStdDev>0.00004 0.00004 0.00004</angularVelocityNoiseStdDev>
 
         <rotorConfiguration>
             <rotor>

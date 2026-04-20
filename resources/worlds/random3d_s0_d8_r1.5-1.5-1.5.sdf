@@ -1,0 +1,127 @@
+<?xml version="1.0"?>
+<sdf version="1.8">
+<world name="map">
+    <physics name="1ms" type="ignored">
+        <max_step_size>0.001</max_step_size>
+        <real_time_factor>2.0</real_time_factor>
+    </physics>
+
+    <plugin filename="libgz-sim-physics-system.so" name="gz::sim::systems::Physics" />
+    <plugin filename="libgz-sim-sensors-system.so" name="gz::sim::systems::Sensors">
+        <render_engine>ogre2</render_engine>
+    </plugin>
+    <plugin filename="gz-sim-contact-system" name="gz::sim::systems::Contact" />
+    <plugin filename="libgz-sim-imu-system" name="gz::sim::systems::Imu" />
+    <plugin filename="libgz-sim-scene-broadcaster-system.so" name="gz::sim::systems::SceneBroadcaster" />
+    <plugin filename="libgz-sim-user-commands-system.so" name="gz::sim::systems::UserCommands" />
+
+    <!-- sun and ground -->
+    <light type="directional" name="sun">
+        <cast_shadows>true</cast_shadows>
+        <pose>0 0 10 0 0 0</pose>
+        <diffuse>0.8 0.8 0.8 1</diffuse>
+        <specular>0.2 0.2 0.2 1</specular>
+        <attenuation>
+            <range>1000</range>
+            <constant>0.9</constant>
+            <linear>0.01</linear>
+            <quadratic>0.001</quadratic>
+        </attenuation>
+        <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <model name="ground_plane">
+        <static>true</static>
+        <link name="link">
+            <pose>14.5 0 -0.05 0 0 0</pose>
+            <collision name="collision">
+                <geometry><box><size>50.0 8.0 0.1</size></box></geometry>
+            </collision>
+            <visual name="visual">
+                <geometry><box><size>50.0 8.0 0.1</size></box></geometry>
+                <material>
+                    <ambient>0.8 0.8 0.8 0.15</ambient>
+                    <diffuse>0.8 0.8 0.8 0.15</diffuse>
+                    <specular>0.8 0.8 0.8 0.15</specular>
+                </material>
+            </visual>
+        </link>
+    </model>
+
+    <model name="random_spheres_s0_d8_r1.5-1.5-1.5">
+        <static>true</static>
+        <link name="base_link">
+            <visual name="merged_visual">
+                <geometry>
+                    <mesh><uri>meshes/random_spheres_s0_d8_r1.5-1.5-1.5.dae</uri></mesh>
+                </geometry>
+                <material>
+                    <ambient>0.7 0.7 0.7 0.9</ambient>
+                    <diffuse>0.7 0.7 0.7 0.9</diffuse>
+                    <specular>0.7 0.7 0.7 0.9</specular>
+                </material>
+            </visual>
+            <collision name="merged_collision">
+                <geometry>
+                    <mesh><uri>meshes/random_spheres_s0_d8_r1.5-1.5-1.5.dae</uri></mesh>
+                </geometry>
+            </collision>
+        </link>
+    </model>
+
+    <model name="ceil">
+        <static>true</static>
+        <link name="link">
+            <pose>14.5 0 8.05 0 0 0</pose>
+            <collision name="collision">
+                <geometry><box><size>50.0 8.0 0.1</size></box></geometry>
+            </collision>
+            <visual name="visual">
+                <geometry><box><size>50.0 8.0 0.1</size></box></geometry>
+                <material>
+                    <ambient>0.8 0.8 0.8 0.15</ambient>
+                    <diffuse>0.8 0.8 0.8 0.15</diffuse>
+                    <specular>0.8 0.8 0.8 0.15</specular>
+                </material>
+            </visual>
+        </link>
+    </model>
+
+    <model name="lwall">
+        <static>true</static>
+        <link name="link">
+            <pose>14.5 4.0 4.0 1.57 0 0</pose>
+            <collision name="collision">
+                <geometry><box><size>50.0 8.0 0.1</size></box></geometry>
+            </collision>
+            <visual name="visual">
+                <geometry><box><size>50.0 8.0 0.1</size></box></geometry>
+                <material>
+                    <ambient>1.0 1.0 1.0 0.15</ambient>
+                    <diffuse>1.0 1.0 1.0 0.15</diffuse>
+                    <specular>1.0 1.0 1.0 0.15</specular>
+                </material>
+            </visual>
+        </link>
+    </model>
+
+    <model name="rwall">
+        <static>true</static>
+        <link name="link">
+            <pose>14.5 -4.0 4.0 1.57 0 0</pose>
+            <collision name="collision">
+                <geometry><box><size>50.0 8.0 0.1</size></box></geometry>
+            </collision>
+            <visual name="visual">
+                <geometry><box><size>50.0 8.0 0.1</size></box></geometry>
+                <material>
+                    <ambient>1.0 1.0 1.0 0.15</ambient>
+                    <diffuse>1.0 1.0 1.0 0.15</diffuse>
+                    <specular>1.0 1.0 1.0 0.15</specular>
+                </material>
+            </visual>
+        </link>
+    </model>
+
+    </world>
+</sdf>
