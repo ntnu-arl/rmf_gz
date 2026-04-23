@@ -15,7 +15,7 @@
     <plugin filename="libgz-sim-sensors-system.so" name="gz::sim::systems::Sensors">
         <render_engine>ogre2</render_engine>
     </plugin>
-    <plugin filename="gz-sim-contact-system" name="gz::sim::systems::Contact" />
+    <plugin filename="libgz-sim-contact-system" name="gz::sim::systems::Contact" />
     <plugin filename="libgz-sim-imu-system" name="gz::sim::systems::Imu" />
     <plugin filename="libgz-sim-scene-broadcaster-system.so" name="gz::sim::systems::SceneBroadcaster" />
     <plugin filename="libgz-sim-user-commands-system.so" name="gz::sim::systems::UserCommands" />
@@ -40,10 +40,10 @@
         <link name="link">
             <pose>14.5 0 -0.05 0 0 0</pose>
             <collision name="collision">
-                <geometry><box><size>50.0 8.0 0.1</size></box></geometry>
+                <geometry><box><size>31 8 0.1</size></box></geometry>
             </collision>
             <visual name="visual">
-                <geometry><box><size>50.0 8.0 0.1</size></box></geometry>
+                <geometry><box><size>31 8 0.1</size></box></geometry>
                 <material>
                     <ambient>0.8 0.8 0.8 0.15</ambient>
                     <diffuse>0.8 0.8 0.8 0.15</diffuse>
@@ -53,12 +53,12 @@
         </link>
     </model>
 
-    <model name="random_spheres_s0_d8_r1.5-1.5-1.5">
+    <model name="random_spheres_s0_d8_r4.0-4.0-4.0">
         <static>true</static>
         <link name="base_link">
             <visual name="merged_visual">
                 <geometry>
-                    <mesh><uri>meshes/random_spheres_s0_d8_r1.5-1.5-1.5.dae</uri></mesh>
+                    <mesh><uri>meshes/random_spheres_s0_d8_r4.0-4.0-4.0.dae</uri></mesh>
                 </geometry>
                 <material>
                     <ambient>0.7 0.7 0.7 0.9</ambient>
@@ -68,7 +68,7 @@
             </visual>
             <collision name="merged_collision">
                 <geometry>
-                    <mesh><uri>meshes/random_spheres_s0_d8_r1.5-1.5-1.5.dae</uri></mesh>
+                    <mesh><uri>meshes/random_spheres_s0_d8_r4.0-4.0-4.0.dae</uri></mesh>
                 </geometry>
             </collision>
         </link>
@@ -79,10 +79,10 @@
         <link name="link">
             <pose>14.5 0 8.05 0 0 0</pose>
             <collision name="collision">
-                <geometry><box><size>50.0 8.0 0.1</size></box></geometry>
+                <geometry><box><size>31 8 0.1</size></box></geometry>
             </collision>
             <visual name="visual">
-                <geometry><box><size>50.0 8.0 0.1</size></box></geometry>
+                <geometry><box><size>31 8 0.1</size></box></geometry>
                 <material>
                     <ambient>0.8 0.8 0.8 0.15</ambient>
                     <diffuse>0.8 0.8 0.8 0.15</diffuse>
@@ -97,10 +97,10 @@
         <link name="link">
             <pose>14.5 4.0 4.0 1.57 0 0</pose>
             <collision name="collision">
-                <geometry><box><size>50.0 8.0 0.1</size></box></geometry>
+                <geometry><box><size>31 8 0.1</size></box></geometry>
             </collision>
             <visual name="visual">
-                <geometry><box><size>50.0 8.0 0.1</size></box></geometry>
+                <geometry><box><size>31 8 0.1</size></box></geometry>
                 <material>
                     <ambient>1.0 1.0 1.0 0.15</ambient>
                     <diffuse>1.0 1.0 1.0 0.15</diffuse>
@@ -115,10 +115,10 @@
         <link name="link">
             <pose>14.5 -4.0 4.0 1.57 0 0</pose>
             <collision name="collision">
-                <geometry><box><size>50.0 8.0 0.1</size></box></geometry>
+                <geometry><box><size>31 8 0.1</size></box></geometry>
             </collision>
             <visual name="visual">
-                <geometry><box><size>50.0 8.0 0.1</size></box></geometry>
+                <geometry><box><size>31 8 0.1</size></box></geometry>
                 <material>
                     <ambient>1.0 1.0 1.0 0.15</ambient>
                     <diffuse>1.0 1.0 1.0 0.15</diffuse>
@@ -128,5 +128,5 @@
         </link>
     </model>
 
-    </world>
+</world>
 </sdf>
