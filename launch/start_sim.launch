@@ -11,7 +11,7 @@
     <arg name="resource_dir" default="$(find lmf_sim)/resources/worlds" />
     <arg name="verbosity" default="4"/>
     <arg name="version" default="7.4.0"/>
-    <arg name="world" default="pillar"/>
+    <arg name="world" default="random3d"/>
     <arg name="headless" default="false"/>
 
     <arg name="headless_args" value="-s --headless-rendering" if="$(arg headless)"/>
