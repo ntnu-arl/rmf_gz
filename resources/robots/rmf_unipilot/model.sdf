@@ -86,6 +86,22 @@
                 <topic>/rmf_unipilot/contact</topic>
             </contact>
         </sensor>
+        <sensor name="imu" type="imu">
+            <always_on>1</always_on>
+            <update_rate>200</update_rate>
+            <imu>
+                <angular_velocity>
+                    <x><noise type="gaussian"><mean>0</mean><stddev>0.00004</stddev></noise></x>
+                    <y><noise type="gaussian"><mean>0</mean><stddev>0.00004</stddev></noise></y>
+                    <z><noise type="gaussian"><mean>0</mean><stddev>0.00004</stddev></noise></z>
+                </angular_velocity>
+                <linear_acceleration>
+                    <x><noise type="gaussian"><mean>0</mean><stddev>0.01</stddev></noise></x>
+                    <y><noise type="gaussian"><mean>0</mean><stddev>0.01</stddev></noise></y>
+                    <z><noise type="gaussian"><mean>0</mean><stddev>0.01</stddev></noise></z>
+                </linear_acceleration>
+            </imu>
+        </sensor>
     </link>
 
     <!-- rotors -->
