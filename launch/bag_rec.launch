@@ -5,8 +5,14 @@
 
     <node pkg="rosbag" type="record" name="recorder" args="--split --size=1024 -o $(arg record_path)/$(arg bag_prefix)
         /clock
+        /rmf_owl/cam/depth
         /rmf_owl/odom
         /rmf_owl/drift_odom
+        /cmd_acc
+        /rmf_owl/cmd/acc
+        /rmf_owl/imu
+        /obs_nn
+        /cbf
         /tf
         /tf_static
     "/>

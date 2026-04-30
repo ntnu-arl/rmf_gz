@@ -237,13 +237,13 @@
         </sensor>
 
 
-        <!-- <sensor name='contact' type='contact'>
+        <sensor name='contact' type='contact'>
             <contact>
                 <collision>base_link_inertia_collision</collision>
             </contact>
             <always_on>1</always_on>
-            <update_rate>50</update_rate>
-        </sensor> -->
+            <update_rate>10</update_rate>
+        </sensor>
     </link>
 
     <!-- rotors -->
@@ -550,7 +550,7 @@
         <rotorDragCoefficient>2.0673e-04</rotorDragCoefficient>
         <rollingMomentCoefficient>0</rollingMomentCoefficient>
         <motorSpeedPubTopic>motor_speed/0</motorSpeedPubTopic>
-        <rotorVelocitySlowdownSim>0.5</rotorVelocitySlowdownSim>
+        <rotorVelocitySlowdownSim>0.9</rotorVelocitySlowdownSim>
         <motorType>velocity</motorType>
     </plugin>
 
@@ -569,7 +569,7 @@
         <rotorDragCoefficient>2.0673e-04</rotorDragCoefficient>
         <rollingMomentCoefficient>0</rollingMomentCoefficient>
         <motorSpeedPubTopic>motor_speed/1</motorSpeedPubTopic>
-        <rotorVelocitySlowdownSim>0.5</rotorVelocitySlowdownSim>
+        <rotorVelocitySlowdownSim>0.9</rotorVelocitySlowdownSim>
         <motorType>velocity</motorType>
     </plugin>
 
@@ -588,7 +588,7 @@
         <rotorDragCoefficient>2.0673e-04</rotorDragCoefficient>
         <rollingMomentCoefficient>0</rollingMomentCoefficient>
         <motorSpeedPubTopic>motor_speed/2</motorSpeedPubTopic>
-        <rotorVelocitySlowdownSim>0.5</rotorVelocitySlowdownSim>
+        <rotorVelocitySlowdownSim>0.9</rotorVelocitySlowdownSim>
         <motorType>velocity</motorType>
     </plugin>
 
@@ -626,7 +626,7 @@
         <attitudeGain>50 50 5</attitudeGain>
         <angularRateGain>3 3 0.3</angularRateGain>
         <maximumLinearVelocity>10 10 10</maximumLinearVelocity>
-        <maximumLinearAcceleration>30 30 30</maximumLinearAcceleration>
+        <maximumLinearAcceleration>30 30 10</maximumLinearAcceleration>
         <maximumAngularVelocity>30 30 5</maximumAngularVelocity>
         <linearVelocityNoiseMean>0 0 0</linearVelocityNoiseMean>
         <!-- linearVelocityNoiseStdDev based on error values reported in the paper Shen et. al., -->

@@ -125,9 +125,15 @@ class URDFEnvironmentBaker:
             if mesh:
                 mesh.apply_transform(self.generate_random_pose())
                 all_meshes.append(mesh)
+                
 
         if all_meshes:
             combined = trimesh.util.concatenate(all_meshes)
+            target_faces = int(len(combined.faces) * 0.1)
+            combined = combined.simplify_quadric_decimation(0.01)
+            
+            
+            
             output_path_dae = os.path.join(self.base_path, output_name)
             output_path_obj = os.path.join(self.base_path, output_name.replace('.dae', '.obj'))
             
@@ -147,4 +153,4 @@ class URDFEnvironmentBaker:
 if __name__ == "__main__":
     PATH_TO_ASSETS = os.path.expanduser("/home/marvin/lmf_ws/src/lmf_sim/resources/environment_assets")
     baker = URDFEnvironmentBaker(PATH_TO_ASSETS)
-    baker.bake(num_obstacles=200, output_name="random_objects.dae")
+    baker.bake(num_obstacles=100, output_name="random_objects.dae")
