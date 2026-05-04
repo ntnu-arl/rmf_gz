@@ -32,7 +32,8 @@ from typing import List
 
 # Ensure sim_runner is importable from the same directory
 sys.path.insert(0, str(Path(__file__).parent))
-from sim_runner import ExitCode, RunResult, run_single
+# ---> Added roscore_ready to the import list
+from sim_runner import ExitCode, RunResult, run_single, roscore_ready
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -208,6 +209,14 @@ def run_experiment(
     print(f"  Hard TO    : {run_timeout_s:.0f} s")
     print(f"{'='*60}\n")
 
+    # ---> PRE-FLIGHT CHECK: Fail fast if roscore isn't running
+    print(f"{BOLD}  [ Pre-flight Check ]{RST}")
+    if not roscore_ready():
+        print(f"{RED}  ERROR: No active roscore detected on localhost:11311.{RST}")
+        print("         Please start 'roscore' in a separate terminal before running this experiment.")
+        sys.exit(1)
+    print("  External roscore detected. Proceeding...\n")
+
     results: List[RunResult] = []
     t_experiment_start = time.time()
 
@@ -313,3 +322,9 @@ if __name__ == "__main__":
         output_path=args.output,
         skip_errors=not args.keep_errors,
     )
+    
+    
+# example usage:
+'''
+python3 src/lmf_sim/run_experiment.py ~/Documents/ARL_PhD/CBF/nCBF3D/nCBF3D/G_ROS_interface/sim_node_lidar.py     --runs 10 --world random3d --headless --output results.json
+'''

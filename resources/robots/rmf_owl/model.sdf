@@ -160,7 +160,7 @@
                 </image>
                 <clip>
                     <near>0.02</near>
-                    <far>20</far>
+                    <far>5</far>
                 </clip>
                 <noise>
                     <type>gaussian</type>
@@ -174,7 +174,7 @@
         <sensor name="depth_cam" type="depth_camera">
             <pose>0.180 0 -0.025 0 0 0</pose>
             <always_on>1</always_on>
-            <update_rate>90</update_rate>
+            <update_rate>1</update_rate>
             <camera name="depth_cam">
                 <horizontal_fov>1.52</horizontal_fov>
                 <image>
@@ -184,7 +184,7 @@
                 </image>
                 <clip>
                     <near>0.02</near>
-                    <far>10</far>
+                    <far>5</far>
                 </clip>
                 <noise>
                     <type>gaussian</type>
