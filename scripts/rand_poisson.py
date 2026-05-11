@@ -4,12 +4,11 @@ import numpy as np
 import scipy as sp
 import os
 import copy
-
+import argparse
 
 PATH_RESOURCES = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../resources')
 PATH_WORLDS = os.path.join(PATH_RESOURCES, 'worlds/')
 PATH_MODELS = os.path.join(PATH_RESOURCES, 'environment_assets/')
-
 
 ## generate random pose values
 def random_poses(n, radius, range, seed=None):
@@ -21,8 +20,17 @@ def random_poses(n, radius, range, seed=None):
     )
     return (poisson_engine.random(n) - np.array([0.5, 0.5, 0])) * range
 
-
 if __name__ == '__main__':
+    ## Set up argument parsing
+    parser = argparse.ArgumentParser(description='Generate a random SDF world with obstacles using Poisson disk sampling.')
+    parser.add_argument(
+        '--radius', '-r',
+        type=float,
+        default=3.0,
+        help='Poisson disk radius for obstacle generation (choose density from 1.5 to 3.0). Default is 3.0.'
+    )
+    args = parser.parse_args()
+
     ## load the SDF file
     tree = ET.parse(os.path.join(PATH_WORLDS, 'empty.sdf'))
     root = tree.getroot()
@@ -32,19 +40,41 @@ if __name__ == '__main__':
     if world is None:
         raise ValueError('no <world> element found in the SDF file')
 
+    ## uncap simulation speed
+    physics = world.find('physics')
+    if physics is None:
+        # Create a physics tag if empty.sdf doesn't have one
+        physics = ET.SubElement(world, 'physics', name='default_physics', type='ode')
+    
+    # Set real_time_factor to 0.0
+    rt_factor = physics.find('real_time_factor')
+    if rt_factor is None:
+        rt_factor = ET.SubElement(physics, 'real_time_factor')
+    rt_factor.text = '0.0'
+
+    # Set real_time_update_rate to 0.0 (This tells Gazebo to run as fast as possible)
+    rt_update_rate = physics.find('real_time_update_rate')
+    if rt_update_rate is None:
+        rt_update_rate = ET.SubElement(physics, 'real_time_update_rate')
+    rt_update_rate.text = '0.0'
+
     ## add random obstacles
-    chunks_radius = [2.5] * 6 # choose density form 1.5 to 2.5 for a good distribution
-    seed = 1500
+    poisson_radius = args.radius
+    chunks_radius = [poisson_radius] * 3 # choose density form 1.5 to 3.0 for a good distribution
+    
+    # Generate a random base seed for this specific run
+    base_seed = np.random.randint(0, 1000000) 
+    
     poisson_domain_size = 8
     x_offset = 2 + poisson_domain_size / 2
     meshes = []
     base_mesh = trimesh.creation.icosphere(subdivisions=2, radius=0.5)
-    for j,r in enumerate(chunks_radius):
-        poisson_obs = random_poses(1000, r, poisson_domain_size, seed+j)
+    
+    for j, r in enumerate(chunks_radius):
+        # Use the random base_seed instead of the hardcoded one
+        poisson_obs = random_poses(1000, r, poisson_domain_size, seed=base_seed+j)
         n_obstacles = poisson_obs.shape[0]
         print(f'placing {n_obstacles} obstacles in the chunk {j} (Poisson radius: {r})')
-
-
         for pos in poisson_obs:
             mesh = base_mesh.copy()
             mesh.apply_translation(pos + [x_offset, 0, 0])

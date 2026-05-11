@@ -116,5 +116,15 @@
             args="$(arg sensor_prefix)/imu/imu@sensor_msgs/Imu[gz.msgs.IMU">
             <remap from="$(arg sensor_prefix)/imu/imu" to="imu"/>
         </node>
+
+        <!-- CONTACT -->
+        <node
+            pkg="ros_ign_bridge"
+            type="parameter_bridge"
+            name="ros_ign_bridge_contact"
+            args="$(arg sensor_prefix)/contact/contact@sensor_msgs/Contact[gz.msgs.Contact">
+            <remap from="$(arg sensor_prefix)/contact/contact" to="contact"/>
+        </node>
+
     </group>
 </launch>

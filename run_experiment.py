@@ -7,7 +7,7 @@ Usage:
 
 Example:
     python3 run_experiment.py ~/ws/src/my_pkg/scripts/my_controller.py \
-        --runs 50 --world random3d --headless --output results.json
+        --runs 50 --world random3d --headless --output results.json --radius 2.5
 
 Termination conditions (per run):
     SUCCESS   : drone x-displacement > 60 m
@@ -26,13 +26,13 @@ import math
 import os
 import sys
 import time
+import subprocess
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import List
 
 # Ensure sim_runner is importable from the same directory
 sys.path.insert(0, str(Path(__file__).parent))
-# ---> Added roscore_ready to the import list
 from sim_runner import ExitCode, RunResult, run_single, roscore_ready
 
 
@@ -194,6 +194,8 @@ def run_experiment(
     imu_topic:         str   = "/rmf_owl/imu",
     output_path:       str   = None,
     skip_errors:       bool  = True,
+    radius:            float = 3.0,
+    world_gen_script:  str   = None,
 ) -> ExperimentStats:
 
     if not os.path.isfile(controller_script):
@@ -207,6 +209,7 @@ def run_experiment(
     print(f"  Runs       : {n_runs}")
     print(f"  Headless   : {headless}")
     print(f"  Hard TO    : {run_timeout_s:.0f} s")
+    print(f"  Radius     : {radius}")
     print(f"{'='*60}\n")
 
     # ---> PRE-FLIGHT CHECK: Fail fast if roscore isn't running
@@ -222,6 +225,21 @@ def run_experiment(
 
     for i in range(1, n_runs + 1):
         print(f"\n{BOLD}── Run {i}/{n_runs} ──────────────────────────────────────{RST}")
+
+        # ---> WORLD GENERATION: Call the external script before running sim_single
+        if world_gen_script and os.path.isfile(world_gen_script):
+            print(f"  [World Gen] Generating new world (radius: {radius})...")
+            try:
+                subprocess.run(
+                    [sys.executable, world_gen_script, "-r", str(radius)],
+                    check=True,
+                    stdout=subprocess.DEVNULL  # Keeps the terminal clean. Remove if you want generator prints.
+                )
+            except subprocess.CalledProcessError as e:
+                print(f"{RED}  ERROR: World generation failed with exit code {e.returncode}.{RST}")
+                sys.exit(1)
+        else:
+            print(f"{YEL}  WARNING: World gen script '{world_gen_script}' not found. Skipping randomization.{RST}")
 
         result = run_single(
             controller_script=controller_script,
@@ -306,11 +324,24 @@ def _parse():
                    help="Optional JSON file to save results (e.g. results.json)")
     p.add_argument("--keep-errors",    action="store_true",
                    help="Include ERROR runs in statistics (excluded by default)")
+    p.add_argument("--radius",   "-r", type=float, default=3.0,
+                   help="Poisson disk radius for the world generation script")
+    p.add_argument("--world-gen",      default=str(Path(__file__).parent / "generate_world.py"),
+                   help="Path to the world generation script")
     return p.parse_args()
 
 
 if __name__ == "__main__":
     args = _parse()
+    
+    # Modify the output filename to include the radius (e.g., results.json -> results_r2.5.json)
+    #output_file = args.output
+    output_file = "results.json"
+    if output_file:
+        p = Path(output_file)
+        # Using string replacement to correctly format the file name
+        output_file = str(p.parent / f"{p.stem}_r{args.radius}{p.suffix}")
+
     run_experiment(
         controller_script=args.controller,
         n_runs=args.runs,
@@ -319,12 +350,8 @@ if __name__ == "__main__":
         run_timeout_s=args.timeout,
         odom_topic=args.odom_topic,
         imu_topic=args.imu_topic,
-        output_path=args.output,
+        output_path=output_file,
         skip_errors=not args.keep_errors,
+        radius=args.radius,
+        world_gen_script=args.world_gen,
     )
-    
-    
-# example usage:
-'''
-python3 src/lmf_sim/run_experiment.py ~/Documents/ARL_PhD/CBF/nCBF3D/nCBF3D/G_ROS_interface/sim_node_lidar.py     --runs 10 --world random3d --headless --output results.json
-'''

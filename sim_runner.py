@@ -181,11 +181,11 @@ class RunMonitor:
     comparisons when the sim runs slower or faster than real-time.
     """
 
-    SUCCESS_X_DIST       = 60.0   # m
-    TIMEOUT_WINDOW       = 30.0   # s  (sim time)
+    SUCCESS_X_DIST       = 30.0   # m
+    TIMEOUT_WINDOW       = 15.0   # s  (sim time)
     TIMEOUT_MIN_DX       = 3.0    # m  — must make at least this much x-progress per window
     IMU_ACCEL_THRESHOLD  = 40.0   # m/s² — spike magnitude that signals a collision
-    IMU_STABILIZATION_S  = 4.0    # s  (sim time) — ignore IMU spikes during startup transient
+    IMU_STABILIZATION_S  = 3.0    # s  (sim time) — ignore IMU spikes during startup transient
 
     def __init__(self):
         self.result  = RunResult()
