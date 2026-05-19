@@ -37,11 +37,13 @@
         -R $(var R) -P $(var P) -Y $(var Y)
     "/>
 
-    <!-- point cloud to range image convertor -->
+    <!-- point cloud to range image convertor-->
+    <!--
     <node pkg="rmf_gz" exec="pc_to_range.py" name="pc_to_range" args="0 0 0 0 0 0 1 /map /$(var robot_name)/odom">
          <remap from="~/img_out" to="/rmf/lidar/range" />
          <remap from="~/pc_in" to="/rmf/lidar/points" />
     </node>
+    -->
 
     <!-- topics -->
     <include file="$(find-pkg-share rmf_gz)/launch/topics.launch.xml">

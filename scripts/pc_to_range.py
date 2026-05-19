@@ -100,9 +100,9 @@ class PcToRangeNode(Node):
         if len(pc):
             img = self.pc2img(pc)
 
-            from matplotlib import pyplot as plt
-            plt.imshow(img)
-            plt.show()
+            #from matplotlib import pyplot as plt
+            #plt.imshow(img)
+            #plt.show()
 
             msg_img = Image()
             msg_img.header = msg.header

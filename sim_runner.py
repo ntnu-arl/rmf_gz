@@ -33,6 +33,7 @@ try:
     from rclpy.qos import qos_profile_sensor_data
     from nav_msgs.msg import Odometry
     from sensor_msgs.msg import Imu
+    from geometry_msgs.msg import Twist
     ROS_AVAILABLE = True
 except ImportError:
     ROS_AVAILABLE = False
@@ -89,7 +90,7 @@ def cleanup():
     )
 
     # Brief pause to let the OS release the ports and memory
-    time.sleep(1)
+    time.sleep(3)
 
 
 def start_process(cmd: List[str], name: str, env=None) -> subprocess.Popen:
@@ -120,8 +121,6 @@ def wait_for_controller_subscription(node: Node, odom_topic: str, timeout: float
     """
     start_time = time.time()
     while time.time() - start_time < timeout:
-        # If the monitor is the only subscriber, the count is 1.
-        # Once the controller comes online, it will hit 2 or more.
         if node.count_subscribers(odom_topic) > 1:
             print(f"  [+] Controller active! (Additional subscriber detected on {odom_topic})")
             return True
@@ -158,10 +157,10 @@ class RunMonitor(Node):
     """
 
     SUCCESS_X_DIST       = 30.0   # m
-    TIMEOUT_WINDOW       = 10.0   # s  (sim time)
-    TIMEOUT_MIN_DX       = 2.0    # m  — must make at least this much x-progress per window
+    TIMEOUT_WINDOW       = 5.0    # s  (sim time)
+    TIMEOUT_MIN_DX       = 1.0    # m  — must make at least this much x-progress per window
     IMU_ACCEL_THRESHOLD  = 40.0   # m/s² — spike magnitude that signals a collision
-    IMU_STABILIZATION_S  = 4.0    # s  (sim time) — ignore IMU spikes during startup transient
+    IMU_STABILIZATION_S  = 3.0    # s  (sim time) — ignore IMU spikes during startup transient
 
     def __init__(self):
         super().__init__('sim_monitor')
@@ -176,10 +175,20 @@ class RunMonitor(Node):
         self._window_start_x: float = 0.0
         self._window_start_t: float = 0.0
 
+        # Command tracking to prevent premature inactivity timeouts
+        self._control_active = False
+
         self._odom_sub = None
         self._imu_sub  = None
+        self._cmd_sub  = None
 
     # ── ROS callbacks ─────────────────────────────────────────────────────────
+
+    def _cmd_cb(self, msg: Twist):
+        # Triggers the first time the control node publishes an action
+        if not self._control_active:
+            self._control_active = True
+            print("  [+] First command received! Progress timeout tracking started.")
 
     def _odom_cb(self, msg: Odometry):
         if self.done.is_set():
@@ -200,6 +209,14 @@ class RunMonitor(Node):
             if self._start_x is None:
                 self._start_x         = pos.x
                 self._start_time      = now
+                self._window_start_x  = pos.x
+                self._window_start_t  = now
+                return
+
+            # If the controller is still warming up/stabilizing, slide the progress window 
+            # forward so we don't trigger the 5-second inactivity timeout.
+            # (Note: We do NOT reset self._start_time, so the global 300s timeout still protects us)
+            if not self._control_active:
                 self._window_start_x  = pos.x
                 self._window_start_t  = now
                 return
@@ -237,12 +254,19 @@ class RunMonitor(Node):
                 self._window_start_x = pos.x
                 self._window_start_t = now
                 
-                
+
     def _imu_cb(self, msg: Imu):
         if self.done.is_set():
             return
 
         with self._lock:
+            # ─────────────────────────────────────────────────────────────
+            # CRITICAL FIX: Ignore all physics/spawn glitches until the 
+            # high-level controller has actually started the mission.
+            # ─────────────────────────────────────────────────────────────
+            if not self._control_active:
+                return
+
             if self._start_time is None or self.latest_time is None:
                 return 
             elapsed = self.latest_time - self._start_time
@@ -266,16 +290,23 @@ class RunMonitor(Node):
 
     def subscribe(self,
                   odom_topic: str = "/rmf/odom",
-                  imu_topic:  str = "/rmf/imu"):
+                  imu_topic:  str = "/rmf/imu",
+                  cmd_topic:  str = "/rmf/cmd/acc"):
+        
         # Applied QoS profiles to match best-effort sensor data
         self._odom_sub = self.create_subscription(Odometry, odom_topic, self._odom_cb, qos_profile_sensor_data)
         self._imu_sub  = self.create_subscription(Imu, imu_topic, self._imu_cb, qos_profile_sensor_data)
+        
+        # Command subscriber to unlock the progress timer
+        self._cmd_sub  = self.create_subscription(Twist, cmd_topic, self._cmd_cb, 10)
 
     def unsubscribe(self):
         if self._odom_sub:
             self.destroy_subscription(self._odom_sub)
         if self._imu_sub:
             self.destroy_subscription(self._imu_sub)
+        if self._cmd_sub:
+            self.destroy_subscription(self._cmd_sub)
 
 
 # ── Top-level single-run function ─────────────────────────────────────────────
@@ -291,27 +322,32 @@ def run_single(
     run_timeout_s: float = 300.0,
     odom_topic: str      = "/rmf/odom",
     imu_topic:  str      = "/rmf/imu",
+    cmd_topic:  str      = "/rmf/cmd/acc",
 ) -> RunResult:
     """
     Starts the monitor node, launches the controller, launches Gazebo sim,
-    monitors until a termination condition fires, then cleans up.
+    monitors until a termination condition fires, then cleans up safely.
     """
     global processes, _shutting_down
     processes      = []
     _shutting_down = False
 
     ros_env    = build_env()
-    ros_ws_env = build_env("install/setup.bash") # Changed from devel to install
+    ros_ws_env = build_env("install/setup.bash")
 
     result = RunResult()
+    
+    # Pre-declare variables for safe teardown in the finally block
+    monitor = None
+    executor = None
+    spin_thread = None
 
     try:
         # 1. Start ROS2 Monitor Node ──────────────────────────────────────────
         rclpy.init()
         monitor = RunMonitor()
-        monitor.subscribe(odom_topic=odom_topic, imu_topic=imu_topic)
+        monitor.subscribe(odom_topic=odom_topic, imu_topic=imu_topic, cmd_topic=cmd_topic)
         
-        # ROS2 requires a background thread to spin the callbacks
         executor = MultiThreadedExecutor()
         executor.add_node(monitor)
         spin_thread = threading.Thread(target=executor.spin, daemon=True)
@@ -340,7 +376,6 @@ def run_single(
         launch_cmd = (
             "source /opt/ros/humble/setup.bash && "
             "source install/setup.bash && "
-            # Update launch extension to .py or .xml if needed (assuming .launch.py for ROS2)
             f"ros2 launch rmf_gz start_sim.launch.xml "
             f"world:={world} headless:={headless_str} "
             f"robot_name:={robot_name} "
@@ -370,8 +405,6 @@ def run_single(
 
             monitor.done.wait(timeout=0.2)
 
-        monitor.unsubscribe()
-
         if not monitor.done.is_set():
             result.exit_code = ExitCode.ERROR
         else:
@@ -381,9 +414,27 @@ def run_single(
         cleanup()
         if ROS_AVAILABLE:
             try:
-                rclpy.shutdown()
-            except Exception:
-                pass
+                # 1. Stop processing incoming messages
+                if monitor is not None:
+                    monitor.unsubscribe()
+                
+                # 2. Command the executor to break its spin loop
+                if executor is not None:
+                    executor.shutdown()
+                
+                # 3. Wait for the background thread to safely exit
+                if spin_thread is not None:
+                    spin_thread.join(timeout=2.0)
+                
+                # 4. Deallocate node structures
+                if monitor is not None:
+                    monitor.destroy_node()
+                
+                # 5. Shut down global ROS context
+                if rclpy.ok():
+                    rclpy.shutdown()
+            except Exception as e:
+                print(f"  [!] Clean teardown warning: {e}")
 
     return result
 

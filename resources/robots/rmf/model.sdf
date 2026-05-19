@@ -40,10 +40,7 @@
             </geometry>
         </visual>
 
-
-
-        <!-- sensors -->
-        <!-- <sensor name="imu" type="imu">
+        <sensor name="imu" type="imu">
             <always_on>1</always_on>
             <update_rate>200</update_rate>
             <imu>
@@ -120,7 +117,6 @@
             </imu>
         </sensor>
 
-
         <sensor name="magnetometer" type="magnetometer">
             <always_on>1</always_on>
             <update_rate>20</update_rate>
@@ -144,56 +140,7 @@
                     </noise>
                 </z>
             </magnetometer>
-        </sensor> -->
-
-
-        <sensor name="rgb_cam" type="camera">
-            <pose>0.180 0 -0.025 0 0 0</pose>
-            <always_on>1</always_on>
-            <update_rate>1</update_rate>
-            <camera name="rgb_cam">
-                <horizontal_fov>1.52</horizontal_fov>
-                <image>
-                    <width>480</width>
-                    <height>270</height>
-                    <format>R8G8B8</format>
-                </image>
-                <clip>
-                    <near>0.02</near>
-                    <far>20</far>
-                </clip>
-                <noise>
-                    <type>gaussian</type>
-                    <mean>0</mean>
-                    <stddev>0.007</stddev>
-                </noise>
-            </camera>
-        </sensor>
-
-
-        <sensor name="depth_cam" type="depth_camera">
-            <pose>0.180 0 -0.025 0 0 0</pose>
-            <always_on>1</always_on>
-            <update_rate>30</update_rate>
-            <camera name="depth_cam">
-                <horizontal_fov>1.52</horizontal_fov>
-                <image>
-                    <width>480</width>
-                    <height>270</height>
-                    <format>R_FLOAT32</format>
-                </image>
-                <clip>
-                    <near>0.02</near>
-                    <far>10</far>
-                </clip>
-                <noise>
-                    <type>gaussian</type>
-                    <mean>0</mean>
-                    <stddev>0.007</stddev>
-                </noise>
-            </camera>
-        </sensor>
-
+        </sensor> 
 
         <visual name="laser_visual">
             <pose>0 0 0.05 0 0 0</pose>
@@ -207,7 +154,7 @@
         <sensor name="lidar" type="gpu_ray">
             <pose>0 0 0.05 0 0 0</pose>
             <always_on>1</always_on>
-            <update_rate>10</update_rate>
+            <update_rate>20</update_rate>
             <lidar>
                 <scan>
                     <horizontal>
@@ -225,7 +172,7 @@
                 </scan>
                 <range>
                     <min>0.22</min>
-                    <max>10</max>
+                    <max>4</max>
                     <resolution>0.01</resolution>
                 </range>
                 <noise>
@@ -236,17 +183,15 @@
             </lidar>
         </sensor>
 
-
-        <!-- <sensor name='contact' type='contact'>
+        <sensor name='contact' type='contact'>
             <contact>
                 <collision>base_link_inertia_collision</collision>
             </contact>
             <always_on>1</always_on>
-            <update_rate>50</update_rate>
-        </sensor> -->
+            <update_rate>10</update_rate>
+        </sensor>
     </link>
 
-    <!-- rotors -->
     <link name="rotor_0">
         <pose frame="">0.09 -0.09 -0.005 0 0 0</pose>
         <inertial>
@@ -516,9 +461,6 @@
         </axis>
     </joint>
 
-
-
-    <!-- plugins -->
     <plugin filename="libgz-sim-pose-publisher-system.so" name="gz::sim::systems::PosePublisher">
         <publish_link_pose>true</publish_link_pose>
         <publish_sensor_pose>true</publish_sensor_pose>
@@ -532,7 +474,7 @@
 
     <plugin filename="libgz-sim-odometry-publisher-system.so" name="gz::sim::systems::OdometryPublisher">
         <dimensions>3</dimensions>
-		<odom_publish_frequency>100</odom_publish_frequency>
+        <odom_publish_frequency>100</odom_publish_frequency>
     </plugin>
 
     <plugin filename="libgz-sim-multicopter-motor-model-system.so" name="gz::sim::systems::MulticopterMotorModel">
@@ -541,8 +483,8 @@
         <jointName>rotor_0_joint</jointName>
         <linkName>rotor_0</linkName>
         <turningDirection>ccw</turningDirection>
-        <timeConstantUp>0.0182</timeConstantUp>
-        <timeConstantDown>0.0182</timeConstantDown>
+        <timeConstantUp>0.01</timeConstantUp>
+        <timeConstantDown>0.01</timeConstantDown>
         <maxRotVelocity>1000.0</maxRotVelocity>
         <motorConstant>0.02246</motorConstant>
         <momentConstant>0.016754</momentConstant>
@@ -550,7 +492,7 @@
         <rotorDragCoefficient>2.0673e-04</rotorDragCoefficient>
         <rollingMomentCoefficient>0</rollingMomentCoefficient>
         <motorSpeedPubTopic>motor_speed/0</motorSpeedPubTopic>
-        <rotorVelocitySlowdownSim>0.5</rotorVelocitySlowdownSim>
+        <rotorVelocitySlowdownSim>0.9</rotorVelocitySlowdownSim>
         <motorType>velocity</motorType>
     </plugin>
 
@@ -560,8 +502,8 @@
         <jointName>rotor_1_joint</jointName>
         <linkName>rotor_1</linkName>
         <turningDirection>ccw</turningDirection>
-        <timeConstantUp>0.0182</timeConstantUp>
-        <timeConstantDown>0.0182</timeConstantDown>
+        <timeConstantUp>0.01</timeConstantUp>
+        <timeConstantDown>0.01</timeConstantDown>
         <maxRotVelocity>1000.0</maxRotVelocity>
         <motorConstant>0.02246</motorConstant>
         <momentConstant>0.016754</momentConstant>
@@ -569,7 +511,7 @@
         <rotorDragCoefficient>2.0673e-04</rotorDragCoefficient>
         <rollingMomentCoefficient>0</rollingMomentCoefficient>
         <motorSpeedPubTopic>motor_speed/1</motorSpeedPubTopic>
-        <rotorVelocitySlowdownSim>0.5</rotorVelocitySlowdownSim>
+        <rotorVelocitySlowdownSim>0.9</rotorVelocitySlowdownSim>
         <motorType>velocity</motorType>
     </plugin>
 
@@ -579,8 +521,8 @@
         <jointName>rotor_2_joint</jointName>
         <linkName>rotor_2</linkName>
         <turningDirection>cw</turningDirection>
-        <timeConstantUp>0.0182</timeConstantUp>
-        <timeConstantDown>0.0182</timeConstantDown>
+        <timeConstantUp>0.01</timeConstantUp>
+        <timeConstantDown>0.01</timeConstantDown>
         <maxRotVelocity>1000.0</maxRotVelocity>
         <motorConstant>0.02246</motorConstant>
         <momentConstant>0.016754</momentConstant>
@@ -588,7 +530,7 @@
         <rotorDragCoefficient>2.0673e-04</rotorDragCoefficient>
         <rollingMomentCoefficient>0</rollingMomentCoefficient>
         <motorSpeedPubTopic>motor_speed/2</motorSpeedPubTopic>
-        <rotorVelocitySlowdownSim>0.5</rotorVelocitySlowdownSim>
+        <rotorVelocitySlowdownSim>0.9</rotorVelocitySlowdownSim>
         <motorType>velocity</motorType>
     </plugin>
 
@@ -598,8 +540,8 @@
         <jointName>rotor_3_joint</jointName>
         <linkName>rotor_3</linkName>
         <turningDirection>cw</turningDirection>
-        <timeConstantUp>0.0182</timeConstantUp>
-        <timeConstantDown>0.0182</timeConstantDown>
+        <timeConstantUp>0.01</timeConstantUp>
+        <timeConstantDown>0.01</timeConstantDown>
         <maxRotVelocity>1000.0</maxRotVelocity>
         <motorConstant>0.02246</motorConstant>
         <momentConstant>0.016754</momentConstant>
@@ -607,61 +549,8 @@
         <rotorDragCoefficient>2.0673e-04</rotorDragCoefficient>
         <rollingMomentCoefficient>0</rollingMomentCoefficient>
         <motorSpeedPubTopic>motor_speed/3</motorSpeedPubTopic>
-        <rotorVelocitySlowdownSim>0.5</rotorVelocitySlowdownSim>
+        <rotorVelocitySlowdownSim>0.9</rotorVelocitySlowdownSim>
         <motorType>velocity</motorType>
-    </plugin>
-
-    <!-- <plugin filename="libgz-sim-multicopter-control-system.so" name="gz::sim::systems::MulticopterVelocityControl"> -->
-    <!-- <plugin filename="libgz-sim-multicopter-position-control-system.so" name="gz::sim::systems::MulticopterPositionControl"> -->
-    <plugin filename="libgz-sim-multicopter-attitude-control-system.so" name="gz::sim::systems::MulticopterAttitudeControl">
-        <robotNamespace>model/rmf</robotNamespace>
-        <commandSubTopic>cmd/att</commandSubTopic>
-        <motorControlPubTopic>command/motor_speed</motorControlPubTopic>
-        <enableSubTopic>enable</enableSubTopic>
-        <comLinkName>base_link</comLinkName>
-        <positionGain>0 0 0</positionGain>
-        <velocityGain>0 0 0</velocityGain>
-        <attitudeGain>15 15 2</attitudeGain>
-        <angularRateGain>2 2 0.2</angularRateGain>
-        <maximumLinearVelocity>5 5 5</maximumLinearVelocity>
-        <maximumLinearAcceleration>5 5 5</maximumLinearAcceleration>
-        <maximumAngularVelocity>5 5 3</maximumAngularVelocity>
-        <linearVelocityNoiseMean>0 0 0</linearVelocityNoiseMean>
-        <!-- linearVelocityNoiseStdDev based on error values reported in the paper Shen et. al., -->
-        <!-- Vision-Based State Estimation and Trajectory Control Towards High-Speed Flight with a Quadrotor -->
-        <!-- http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.490.7958&rep=rep1&type=pdf -->
-        <linearVelocityNoiseStdDev>0.1105 0.1261 0.0947</linearVelocityNoiseStdDev>
-        <angularVelocityNoiseMean>0 0 0</angularVelocityNoiseMean>
-        <!-- angularVelocityNoiseStdDev values based on ADIS16448's Rate Noise Density with a sample  -->
-        <!-- time of 0.004 ms. -->
-        <angularVelocityNoiseStdDev>0.004 0.004 0.004</angularVelocityNoiseStdDev>
-
-        <rotorConfiguration>
-            <rotor>
-                <jointName>rotor_0_joint</jointName>
-                <forceConstant>0.02246</forceConstant>
-                <momentConstant>1.6754e-2</momentConstant>
-                <direction>1</direction>
-            </rotor>
-            <rotor>
-                <jointName>rotor_1_joint</jointName>
-                <forceConstant>0.02246</forceConstant>
-                <momentConstant>1.6754e-2</momentConstant>
-                <direction>1</direction>
-            </rotor>
-            <rotor>
-                <jointName>rotor_2_joint</jointName>
-                <forceConstant>0.02246</forceConstant>
-                <momentConstant>1.6754e-2</momentConstant>
-                <direction>-1</direction>
-            </rotor>
-            <rotor>
-                <jointName>rotor_3_joint</jointName>
-                <forceConstant>0.02246</forceConstant>
-                <momentConstant>1.6754e-2</momentConstant>
-                <direction>-1</direction>
-            </rotor>
-        </rotorConfiguration>
     </plugin>
 
     <plugin filename="libgz-sim-multicopter-acceleration-control-system.so" name="gz::sim::systems::MulticopterAccelerationControl">
@@ -672,19 +561,14 @@
         <comLinkName>base_link</comLinkName>
         <positionGain>0 0 0</positionGain>
         <velocityGain>0 0 0</velocityGain>
-        <attitudeGain>15 15 2</attitudeGain>
-        <angularRateGain>2 2 0.2</angularRateGain>
-        <maximumLinearVelocity>5 5 5</maximumLinearVelocity>
-        <maximumLinearAcceleration>5 5 5</maximumLinearAcceleration>
-        <maximumAngularVelocity>5 5 3</maximumAngularVelocity>
+        <attitudeGain>50 50 5</attitudeGain>
+        <angularRateGain>3 3 0.3</angularRateGain>
+        <maximumLinearVelocity>10 10 10</maximumLinearVelocity>
+        <maximumLinearAcceleration>30 30 10</maximumLinearAcceleration>
+        <maximumAngularVelocity>30 30 5</maximumAngularVelocity>
         <linearVelocityNoiseMean>0 0 0</linearVelocityNoiseMean>
-        <!-- linearVelocityNoiseStdDev based on error values reported in the paper Shen et. al., -->
-        <!-- Vision-Based State Estimation and Trajectory Control Towards High-Speed Flight with a Quadrotor -->
-        <!-- http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.490.7958&rep=rep1&type=pdf -->
-        <linearVelocityNoiseStdDev>0.1105 0.1261 0.0947</linearVelocityNoiseStdDev>
+        <linearVelocityNoiseStdDev>0.01 0.01 0.01</linearVelocityNoiseStdDev>
         <angularVelocityNoiseMean>0 0 0</angularVelocityNoiseMean>
-        <!-- angularVelocityNoiseStdDev values based on ADIS16448's Rate Noise Density with a sample  -->
-        <!-- time of 0.004 ms. -->
         <angularVelocityNoiseStdDev>0.004 0.004 0.004</angularVelocityNoiseStdDev>
 
         <rotorConfiguration>
