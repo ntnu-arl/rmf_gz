@@ -1,0 +1,39 @@
+# ==============================================================
+# META-SUPERVISOR SETTINGS (Batch Control)
+# ==============================================================
+ablation:
+  runs_per_density: 50
+  densities: [1.5, 1.8, 2.0, 2.5, 3.0]
+  experiment_script_path: "src/rmf_gz/run_experiment.py"
+  controller_script_path: "~/nCBF3D/nCBF3D/G_ROS_interface/sim_node_lidar_ros2.py"
+
+# ==============================================================
+# SIMULATION ENVIRONMENT SETTINGS (Gazebo Setup)
+# ==============================================================
+simulation:
+  world_name: "random3d"
+  headless: true
+  robot_name: "rmf"
+  run_timeout_s: 100.0
+  spawn_pose:
+    x: 0.0
+    y: 0.0
+    z: 0.15
+
+# ==============================================================
+# TERMINATION CONDITIONS (sim_runner.py Logic)
+# ==============================================================
+termination:
+  success_x_dist_m: 30.0       # Distance required to register a "SUCCESS"
+  progress_window_s: 5.0       # Time window to check for stall/stuck conditions
+  progress_min_dx_m: 0.5       # Minimum forward progress required per window
+  imu_accel_threshold: 40.0    # m/s^2 spike indicating a physical collision
+  imu_stabilization_s: 3.0     # Grace period to ignore spawn/drop physics jolts
+
+# ==============================================================
+# ROS 2 TOPICS (Middleware Routing)
+# ==============================================================
+topics:
+  odom: "/rmf/odom"
+  imu: "/rmf/imu"
+  cmd_acc: "/rmf/cmd/acc"

@@ -187,6 +187,7 @@ def print_final_report(s: ExperimentStats, elapsed_total: float):
 
 def run_experiment(
     controller_script: str,
+    config_path:       str   = "ablation_config.yaml",
     n_runs:            int   = 20,
     world:             str   = "random3d",
     headless:          bool  = False,
@@ -206,6 +207,7 @@ def run_experiment(
     print(f"\n{BOLD}{'='*60}{RST}")
     print(f"{BOLD}  Reactive Controller — Statistical Experiment (ROS2){RST}")
     print(f"  Controller : {controller_script}")
+    print(f"  Config     : {config_path}")
     print(f"  World      : {world}")
     print(f"  Runs       : {n_runs}")
     print(f"  Headless   : {headless}")
@@ -234,13 +236,13 @@ def run_experiment(
         else:
             print(f"{YEL}  WARNING: World gen script '{world_gen_script}' not found. Skipping randomization.{RST}")
 
+        # Update run_single call to pass the config path and use overrides
         result = run_single(
             controller_script=controller_script,
-            world=world,
-            headless=headless,
-            run_timeout_s=run_timeout_s,
-            odom_topic=odom_topic,
-            imu_topic=imu_topic,
+            config_path=config_path,
+            world_override=world,
+            headless_override=headless,
+            timeout_override=run_timeout_s,
         )
         print_live_summary(i, result)
         results.append(result)
@@ -301,6 +303,8 @@ def _parse():
     )
     p.add_argument("controller",
                    help="Path to the ROS2 controller Python script")
+    p.add_argument("--config",         default="ablation_config.yaml",
+                   help="Path to the YAML config file")
     p.add_argument("--runs",    "-n",  type=int,   default=20,
                    help="Number of trials to run")
     p.add_argument("--world",          default="random3d",
@@ -336,6 +340,7 @@ if __name__ == "__main__":
 
     run_experiment(
         controller_script=args.controller,
+        config_path=args.config,
         n_runs=args.runs,
         world=args.world,
         headless=args.headless,

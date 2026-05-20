@@ -1,15 +1,9 @@
-import os, sys
+import os
+import sys
 import subprocess
 import time
-
-# ==============================================================
-# ABLATION SUPERVISOR CONFIGURATION
-# ==============================================================
-NUM_RUNS = 50 
-DENSITIES = [1.5, 1.8, 2.0, 2.5, 3.0]
-EXPERIMENT_PATH = "src/rmf_gz/run_experiment.py" 
-CONTROLLER_PATH = os.path.expanduser("~/nCBF3D/nCBF3D/G_ROS_interface/sim_node_lidar_ros2.py")
-WORLD_NAME = "random3d"
+import argparse
+import yaml
 
 def scorched_earth_cleanup():
     """Deep clean between density batches to prevent zombie accumulation."""
@@ -46,6 +40,36 @@ def scorched_earth_cleanup():
     time.sleep(3.0)
 
 if __name__=="__main__":
+    parser = argparse.ArgumentParser(description="Master Supervisor for Ablation Studies")
+    parser.add_argument("--config", default="/home/arl/lmf_ws/src/rmf_gz/ablation_config.yaml", help="Path to the ablation YAML config file")
+    args = parser.parse_args()
+
+    # Resolve absolute path to ensure downstream scripts can always find it
+    config_path = os.path.abspath(os.path.expanduser(args.config))
+
+    try:
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
+    except FileNotFoundError:
+        print(f"\n[!] CRITICAL ERROR: Config file '{config_path}' not found.")
+        print("Please ensure the file exists or pass the correct path using --config")
+        sys.exit(1)
+
+    # ─── EXTRACT CONFIGURATION PARAMETERS ──────────────────────────────────────
+    ablation_cfg = config.get('ablation', {})
+    sim_cfg      = config.get('simulation', {})
+
+    NUM_RUNS        = ablation_cfg.get('runs_per_density', 50)
+    DENSITIES       = ablation_cfg.get('densities', [1.5, 1.8, 2.0, 2.5, 3.0])
+    EXPERIMENT_PATH = os.path.expanduser(ablation_cfg.get('experiment_script_path', 'src/rmf_gz/run_experiment.py'))
+    CONTROLLER_PATH = os.path.expanduser(ablation_cfg.get('controller_script_path', '~/nCBF3D/nCBF3D/G_ROS_interface/sim_node_lidar_ros2.py'))
+    
+    WORLD_NAME      = sim_cfg.get('world_name', 'random3d')
+    TIMEOUT         = str(sim_cfg.get('run_timeout_s', 300.0))
+    IS_HEADLESS     = sim_cfg.get('headless', True)
+
+    # ─── EXECUTE BATCHES ───────────────────────────────────────────────────────
+    
     # Ensure starting from a clean slate
     scorched_earth_cleanup()
     
@@ -54,18 +78,22 @@ if __name__=="__main__":
         print(f"🚀 STARTING BATCH: Density {density} | Runs: {NUM_RUNS}")
         print(f"{'='*60}")
         
-        # Construct the command list
+        # Construct the core command list
         cmd = [
             "python3", EXPERIMENT_PATH, CONTROLLER_PATH,
+            "--config", config_path,      # Pass absolute config path downstream
             "--runs", str(NUM_RUNS),
             "--world", WORLD_NAME,
-            "--headless",
             "--radius", str(density),
-            "--timeout", "300"
+            "--timeout", TIMEOUT
         ]
         
+        # Conditionally append the headless flag
+        if IS_HEADLESS:
+            cmd.append("--headless")
+        
         try:
-            # Execute the ablation supervisor script
+            # Execute the experiment runner script
             subprocess.run(cmd, check=True)
             
         except subprocess.CalledProcessError as e:

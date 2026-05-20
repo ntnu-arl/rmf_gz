@@ -2,10 +2,10 @@
 """
 sim_runner.py  —  Single simulation run with termination monitoring.
 
-Termination conditions:
-  - SUCCESS  : drone travels > 60 m in the x-direction from its spawn pose
+Termination conditions (Configured via ablation_config.yaml):
+  - SUCCESS  : drone travels > success_x_dist_m in the x-direction
   - COLLISION: IMU sensor fires massive spike (collision with environment)
-  - TIMEOUT  : less than 3 m x-progress in the last 30 s (measured in sim time)
+  - TIMEOUT  : less than progress_min_dx_m progress in progress_window_s
 
 Returns exit codes:
   0  = SUCCESS
@@ -21,6 +21,7 @@ import os
 import signal
 import threading
 import argparse
+import yaml
 from typing import List, Tuple, Optional
 from dataclasses import dataclass, field
 from enum import IntEnum
@@ -33,7 +34,7 @@ try:
     from rclpy.qos import qos_profile_sensor_data
     from nav_msgs.msg import Odometry
     from sensor_msgs.msg import Imu
-    from geometry_msgs.msg import Twist
+    # Twist removed since we no longer monitor the command topic directly
     ROS_AVAILABLE = True
 except ImportError:
     ROS_AVAILABLE = False
@@ -156,17 +157,21 @@ class RunMonitor(Node):
     Thread-safe: the main loop polls `self.done` and `self.result`.
     """
 
-    SUCCESS_X_DIST       = 30.0   # m
-    TIMEOUT_WINDOW       = 5.0    # s  (sim time)
-    TIMEOUT_MIN_DX       = 1.0    # m  — must make at least this much x-progress per window
-    IMU_ACCEL_THRESHOLD  = 40.0   # m/s² — spike magnitude that signals a collision
-    IMU_STABILIZATION_S  = 3.0    # s  (sim time) — ignore IMU spikes during startup transient
-
-    def __init__(self):
+    def __init__(self, term_cfg: dict = None):
         super().__init__('sim_monitor')
+        if term_cfg is None:
+            term_cfg = {}
+
         self.result  = RunResult()
         self.done    = threading.Event()
         self._lock   = threading.Lock()
+
+        # Dynamic parameter injection from YAML (with safe fallbacks)
+        self.SUCCESS_X_DIST      = term_cfg.get('success_x_dist_m', 30.0)
+        self.TIMEOUT_WINDOW      = term_cfg.get('progress_window_s', 5.0)
+        self.TIMEOUT_MIN_DX      = term_cfg.get('progress_min_dx_m', 1.0)
+        self.IMU_ACCEL_THRESHOLD = term_cfg.get('imu_accel_threshold', 40.0)
+        self.IMU_STABILIZATION_S = term_cfg.get('imu_stabilization_s', 3.0)
 
         self._start_x:    Optional[float] = None
         self._start_time: Optional[float] = None
@@ -175,20 +180,13 @@ class RunMonitor(Node):
         self._window_start_x: float = 0.0
         self._window_start_t: float = 0.0
 
-        # Command tracking to prevent premature inactivity timeouts
-        self._control_active = False
+        # Mission tracker based on geometric takeoff altitude
+        self._mission_armed = False
 
         self._odom_sub = None
         self._imu_sub  = None
-        self._cmd_sub  = None
 
     # ── ROS callbacks ─────────────────────────────────────────────────────────
-
-    def _cmd_cb(self, msg: Twist):
-        # Triggers the first time the control node publishes an action
-        if not self._control_active:
-            self._control_active = True
-            print("  [+] First command received! Progress timeout tracking started.")
 
     def _odom_cb(self, msg: Odometry):
         if self.done.is_set():
@@ -206,22 +204,23 @@ class RunMonitor(Node):
         speed = (vel.x**2 + vel.y**2 + vel.z**2) ** 0.5
 
         with self._lock:
-            if self._start_x is None:
-                self._start_x         = pos.x
-                self._start_time      = now
-                self._window_start_x  = pos.x
-                self._window_start_t  = now
-                return
+            # ─────────────────────────────────────────────────────────────
+            # TAKEOFF GUARD: Do not start timers until drone reaches [0,0,4]
+            # ─────────────────────────────────────────────────────────────
+            if not self._mission_armed:
+                dist_to_takeoff = ((pos.x - 0.0)**2 + (pos.y - 0.0)**2 + (pos.z - 4.0)**2)**0.5
+                if dist_to_takeoff <= 0.5:
+                    self._mission_armed = True
+                    print("  [+] Takeoff altitude reached! Mission timers and collision detection ARMED.")
+                    
+                    # Reset all trackers as if the run starts RIGHT NOW
+                    self._start_x         = pos.x
+                    self._start_time      = now
+                    self._window_start_x  = pos.x
+                    self._window_start_t  = now
+                return  # Silent return, do not track max_x or timeouts during takeoff!
 
-            # If the controller is still warming up/stabilizing, slide the progress window 
-            # forward so we don't trigger the 5-second inactivity timeout.
-            # (Note: We do NOT reset self._start_time, so the global 300s timeout still protects us)
-            if not self._control_active:
-                self._window_start_x  = pos.x
-                self._window_start_t  = now
-                return
-
-            # ── GAZEBO GRACE PERIOD ───────────────────────────────────────────
+            # ── GAZEBO GRACE PERIOD (Post-Takeoff) ────────────────────────────
             if now - self._start_time < 0.5:
                 self._start_x = pos.x
                 self._window_start_x = pos.x
@@ -253,18 +252,14 @@ class RunMonitor(Node):
                 # slide the window forward
                 self._window_start_x = pos.x
                 self._window_start_t = now
-                
 
     def _imu_cb(self, msg: Imu):
         if self.done.is_set():
             return
 
         with self._lock:
-            # ─────────────────────────────────────────────────────────────
-            # CRITICAL FIX: Ignore all physics/spawn glitches until the 
-            # high-level controller has actually started the mission.
-            # ─────────────────────────────────────────────────────────────
-            if not self._control_active:
+            # Absolute immunity to collisions during spool-up and takeoff
+            if not self._mission_armed:
                 return
 
             if self._start_time is None or self.latest_time is None:
@@ -290,39 +285,27 @@ class RunMonitor(Node):
 
     def subscribe(self,
                   odom_topic: str = "/rmf/odom",
-                  imu_topic:  str = "/rmf/imu",
-                  cmd_topic:  str = "/rmf/cmd/acc"):
+                  imu_topic:  str = "/rmf/imu"):
         
         # Applied QoS profiles to match best-effort sensor data
         self._odom_sub = self.create_subscription(Odometry, odom_topic, self._odom_cb, qos_profile_sensor_data)
         self._imu_sub  = self.create_subscription(Imu, imu_topic, self._imu_cb, qos_profile_sensor_data)
-        
-        # Command subscriber to unlock the progress timer
-        self._cmd_sub  = self.create_subscription(Twist, cmd_topic, self._cmd_cb, 10)
 
     def unsubscribe(self):
         if self._odom_sub:
             self.destroy_subscription(self._odom_sub)
         if self._imu_sub:
             self.destroy_subscription(self._imu_sub)
-        if self._cmd_sub:
-            self.destroy_subscription(self._cmd_sub)
 
 
 # ── Top-level single-run function ─────────────────────────────────────────────
 
 def run_single(
     controller_script: str,
-    world: str           = "pillar",
-    headless: bool       = True,
-    robot_name: str      = "rmf",
-    spawn_x: float       = 0.0,
-    spawn_y: float       = 0.0,
-    spawn_z: float       = 1.0,
-    run_timeout_s: float = 300.0,
-    odom_topic: str      = "/rmf/odom",
-    imu_topic:  str      = "/rmf/imu",
-    cmd_topic:  str      = "/rmf/cmd/acc",
+    config_path: str         = "/home/arl/lmf_ws/src/rmf_gz/ablation_config.yaml",
+    world_override: str      = None,
+    headless_override: bool  = None,
+    timeout_override: float  = None,
 ) -> RunResult:
     """
     Starts the monitor node, launches the controller, launches Gazebo sim,
@@ -335,6 +318,31 @@ def run_single(
     ros_env    = build_env()
     ros_ws_env = build_env("install/setup.bash")
 
+    # Load the YAML configuration
+    try:
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
+    except FileNotFoundError:
+        print(f"  [!] Config file {config_path} not found. Defaulting to safe hardcoded values.")
+        config = {}
+
+    sim_cfg  = config.get('simulation', {})
+    term_cfg = config.get('termination', {})
+    top_cfg  = config.get('topics', {})
+
+    # Priority mapping: 1. CLI Override -> 2. YAML File -> 3. Hardcoded Default
+    world         = world_override if world_override is not None else sim_cfg.get('world_name', 'random3d')
+    headless      = headless_override if headless_override is not None else sim_cfg.get('headless', True)
+    run_timeout_s = timeout_override if timeout_override is not None else sim_cfg.get('run_timeout_s', 300.0)
+
+    robot_name = sim_cfg.get('robot_name', 'rmf')
+    spawn_x    = sim_cfg.get('spawn_pose', {}).get('x', 0.0)
+    spawn_y    = sim_cfg.get('spawn_pose', {}).get('y', 0.0)
+    spawn_z    = sim_cfg.get('spawn_pose', {}).get('z', 1.0)
+
+    odom_topic = top_cfg.get('odom', '/rmf/odom')
+    imu_topic  = top_cfg.get('imu', '/rmf/imu')
+
     result = RunResult()
     
     # Pre-declare variables for safe teardown in the finally block
@@ -345,8 +353,8 @@ def run_single(
     try:
         # 1. Start ROS2 Monitor Node ──────────────────────────────────────────
         rclpy.init()
-        monitor = RunMonitor()
-        monitor.subscribe(odom_topic=odom_topic, imu_topic=imu_topic, cmd_topic=cmd_topic)
+        monitor = RunMonitor(term_cfg)
+        monitor.subscribe(odom_topic=odom_topic, imu_topic=imu_topic)
         
         executor = MultiThreadedExecutor()
         executor.add_node(monitor)
@@ -444,9 +452,10 @@ def run_single(
 def _parse_args():
     p = argparse.ArgumentParser(description="Run a single simulation trial.")
     p.add_argument("controller", help="Path to the controller Python script")
-    p.add_argument("--world",    default="random3d")
-    p.add_argument("--headless", action="store_true")
-    p.add_argument("--timeout",  type=float, default=300.0)
+    p.add_argument("--config",   default="ablation_config.yaml", help="Path to YAML configuration file")
+    p.add_argument("--world",    default=None, help="Override world name from YAML")
+    p.add_argument("--headless", action="store_true", help="Force headless mode if passed")
+    p.add_argument("--timeout",  type=float, default=None, help="Override timeout from YAML")
     return p.parse_args()
 
 
@@ -456,11 +465,16 @@ if __name__ == "__main__":
         sys.exit(3)
 
     args = _parse_args()
+    
+    # Process CLI headless flag carefully so it doesn't overwrite a True YAML setting if omitted
+    cli_headless = True if args.headless else None
+    
     r = run_single(
         controller_script=args.controller,
-        world=args.world,
-        headless=args.headless,
-        run_timeout_s=args.timeout,
+        config_path=args.config,
+        world_override=args.world,
+        headless_override=cli_headless,
+        timeout_override=args.timeout,
     )
     print(f"\nResult: {r.exit_code.name}  |  max_x={r.max_x:.2f} m  "
           f"|  mean_v={r.mean_velocity:.2f} m/s  |  max_v={r.max_velocity:.2f} m/s  "
