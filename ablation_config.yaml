@@ -3,9 +3,30 @@
 # ==============================================================
 ablation:
   runs_per_density: 50
-  densities: [1.5, 1.8, 2.0, 2.5, 3.0]
+  densities: [1.5, 1.8, 2.0, 3.0]
+  radii: [0.5, 0.4, 0.3, 0.2]
   experiment_script_path: "src/rmf_gz/run_experiment.py"
   controller_script_path: "~/nCBF3D/nCBF3D/G_ROS_interface/sim_node_lidar_ros2.py"
+
+
+# ===========================================================
+# Setting for ablation across controllers
+# ===========================================================
+controllers: ["heuristic"] # ["heuristic", "blind", "random"]
+USE_PASSTHROUGH: False # if to disable the safety filter and just use the heuristic above
+
+
+# ==============================================================
+# Settings for ablation across lidar rate
+# ==============================================================
+lidar_rates: [20, 3, 1]
+
+
+# ==============================================================
+# Settings for ablation across lidar freuquency
+# ==============================================================
+lidar_noise_scale: [0.0, 1.0, 2.0, 3.0]
+
 
 # ==============================================================
 # SIMULATION ENVIRONMENT SETTINGS (Gazebo Setup)
@@ -27,8 +48,8 @@ termination:
   success_x_dist_m: 30.0       # Distance required to register a "SUCCESS"
   progress_window_s: 5.0       # Time window to check for stall/stuck conditions
   progress_min_dx_m: 0.5       # Minimum forward progress required per window
-  imu_accel_threshold: 40.0    # m/s^2 spike indicating a physical collision
-  imu_stabilization_s: 3.0     # Grace period to ignore spawn/drop physics jolts
+  imu_accel_threshold: 50.0    # m/s^2 spike indicating a physical collision
+  imu_stabilization_s: 0.25     # Grace period to ignore spawn/drop physics jolts
 
 # ==============================================================
 # ROS 2 TOPICS (Middleware Routing)

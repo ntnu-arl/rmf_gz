@@ -91,7 +91,7 @@ def cleanup():
     )
 
     # Brief pause to let the OS release the ports and memory
-    time.sleep(3)
+    time.sleep(1.0)
 
 
 def start_process(cmd: List[str], name: str, env=None) -> subprocess.Popen:
@@ -367,7 +367,7 @@ def run_single(
             ["bash", "-c",
              f"source /opt/ros/humble/setup.bash && "
              f"source install/setup.bash && "
-             f"python3 {controller_script}"],
+             f"python3 {controller_script} --config {config_path}"],  # <--- Added config flag!
             name="controller",
             env=ros_ws_env,
         )

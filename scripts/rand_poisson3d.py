@@ -16,7 +16,7 @@ def random_poses(n, radius, range, seed=None):
     poisson_engine = sp.stats.qmc.PoissonDisk(
         d=3,
         radius=radius / range,
-        ncandidates=1000,
+        ncandidates=100,
         seed=seed,
     )
     return (poisson_engine.random(n) - np.array([0.5, 0.5, 0])) * range
@@ -29,6 +29,12 @@ if __name__ == '__main__':
         type=float,
         default=3.0,
         help='Poisson disk radius for obstacle generation (choose density from 1.5 to 3.0). Default is 3.0.'
+    )
+    parser.add_argument(
+        '--sphere_radius', '-sr',
+        type=float,
+        default=0.5,
+        help='Radius of the spherical obstacles (default: 0.5).'
     )
     args = parser.parse_args()
 
@@ -53,7 +59,7 @@ if __name__ == '__main__':
     # SPEED CAP SETTINGS
     # Change TARGET_RTF to test your hardware limit (e.g., 2.0, 3.0, 5.0)
     # ---------------------------------------------------------
-    TARGET_RTF = 1.0  
+    TARGET_RTF = 4.0  
     STEP_SIZE = 0.001 # This must match your <max_step_size>
 
     # Set real_time_factor (The target speed multiplier)
@@ -80,7 +86,7 @@ if __name__ == '__main__':
     poisson_domain_size = 8
     x_offset = 2 + poisson_domain_size / 2
     meshes = []
-    base_mesh = trimesh.creation.icosphere(subdivisions=2, radius=0.5)
+    base_mesh = trimesh.creation.icosphere(subdivisions=2, radius=args.sphere_radius)
     
     for j, r in enumerate(chunks_radius):
         # Use the random base_seed instead of the hardcoded one
