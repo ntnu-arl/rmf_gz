@@ -65,6 +65,24 @@
                 <optical_frame_id>rmf_unipilot/base_link/rgb_cam/optical</optical_frame_id>
             </camera>
         </sensor>
+        <sensor name="depth_cam" type="depth_camera">
+            <pose>0.18 0 -0.025 0 0 0</pose>
+            <always_on>1</always_on>
+            <update_rate>20</update_rate>
+            <camera name="depth_cam">
+                <horizontal_fov>1.52</horizontal_fov>
+                <image>
+                    <width>480</width>
+                    <height>270</height>
+                    <format>R_FLOAT32</format>
+                </image>
+                <clip>
+                    <near>0.02</near>
+                    <far>20</far>
+                </clip>
+                <optical_frame_id>rmf_unipilot/base_link/depth_cam/optical</optical_frame_id>
+            </camera>
+        </sensor>
         <sensor name="lidar" type="gpu_ray">
             <pose>-0.15 0 0.05 0 1.57 3.1416</pose>
             <always_on>1</always_on>
