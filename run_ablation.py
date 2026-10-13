@@ -11,7 +11,7 @@ def scorched_earth_cleanup():
     
     kill_commands = [
         # 1. Kill the specific python controllers 
-        "pkill -9 -f sim_node_lidar_ros2.py",
+        "pkill -9 -f sim_node_lidar",   # matches the controllers actually in use
         
         # 2. Kill Gazebo executables EXACTLY
         "pkill -9 -x gz",

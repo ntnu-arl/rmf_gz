@@ -14,6 +14,7 @@ Returns exit codes:
   3  = ERROR (launch failure)
 """
 
+import atexit
 import subprocess
 import time
 import sys
@@ -34,7 +35,7 @@ try:
     from rclpy.qos import qos_profile_sensor_data
     from nav_msgs.msg import Odometry
     from sensor_msgs.msg import Imu
-    # Twist removed since we no longer monitor the command topic directly
+    from geometry_msgs.msg import Twist
     ROS_AVAILABLE = True
 except ImportError:
     ROS_AVAILABLE = False
@@ -60,13 +61,16 @@ def cleanup():
         return
     _shutting_down = True
 
-    # 1. Ask processes to shut down gracefully
+    # 1. Ask processes to shut down gracefully.
+    #    NOTE: signal the process GROUP even when the direct child has already
+    #    exited. Launched processes are `bash -c "... ros2 launch ..."`, so the
+    #    bridges are grandchildren; if the bash wrapper dies first, skipping it
+    #    here leaves the whole group running and they get reparented to init,
+    #    which is how ros_gz_bridge/parameter_bridge instances survive a run and
+    #    keep publishing /clock against the next simulation.
     for proc, name in reversed(processes):
-        if proc.poll() is not None:
-            continue
         try:
-            pgid = os.getpgid(proc.pid)
-            os.killpg(pgid, signal.SIGINT)
+            os.killpg(os.getpgid(proc.pid), signal.SIGINT)
         except (ProcessLookupError, OSError):
             pass
 
@@ -82,9 +86,16 @@ def cleanup():
                 pass
             proc.wait()
 
-    # 3. AGGRESSIVE CLEANUP: Nuke orphaned ROS2/Gazebo processes
+    # 3. AGGRESSIVE CLEANUP: nuke anything orphaned by a group kill that missed.
+    #    Same list as scorched_earth_cleanup() in the ablation drivers -- in
+    #    particular the ros_gz bridges, which the previous `killall ros2 ruby gz
+    #    ign` did not match at all. `killall -9 ros2` is deliberately NOT used:
+    #    it also kills unrelated `ros2` CLI invocations.
     subprocess.run(
-        "killall -9 ros2 ruby gz ign 2>/dev/null; pkill -9 -f 'gz sim' 2>/dev/null",
+        "pkill -9 -x gz; pkill -9 -x ruby; pkill -9 -f 'gz sim'; "
+        "pkill -9 -x ros_gz_bridge; pkill -9 -x parameter_bridge; pkill -9 -x image_bridge; "
+        "pkill -9 -f static_transform_publisher; pkill -9 -f robot_state_publisher; "
+        "pkill -9 -f 'ros2 launch'",
         shell=True,
         stderr=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
@@ -92,6 +103,28 @@ def cleanup():
 
     # Brief pause to let the OS release the ports and memory
     time.sleep(1.0)
+
+
+def _terminate_handler(signum, _frame):
+    """
+    SIGINT becomes KeyboardInterrupt and unwinds through run_single's `finally`,
+    but a plain SIGTERM (`kill`, `pkill` without -9) terminates the interpreter
+    without unwinding, so cleanup() would never run and the whole ROS graph would
+    be orphaned. Catch it, tear down, then exit.
+    """
+    cleanup()
+    sys.exit(128 + signum)
+
+
+for _sig in (signal.SIGTERM, signal.SIGHUP):
+    try:
+        signal.signal(_sig, _terminate_handler)
+    except (ValueError, OSError):
+        pass            # not the main thread / unsupported platform
+
+# last resort for any other interpreter exit; cleanup() is idempotent via
+# _shutting_down, which run_single resets per run
+atexit.register(cleanup)
 
 
 def start_process(cmd: List[str], name: str, env=None) -> subprocess.Popen:
@@ -137,6 +170,7 @@ class RunResult:
     exit_code:  ExitCode = ExitCode.ERROR
     max_x:      float    = 0.0
     velocities: list     = field(default_factory=list)  # |v| samples (m/s)
+    interventions: list  = field(default_factory=list)
     duration_s: float    = 0.0
     collision:  bool     = False
     timeout:    bool     = False
@@ -149,6 +183,10 @@ class RunResult:
     @property
     def max_velocity(self) -> float:
         return max(self.velocities) if self.velocities else 0.0
+
+    @property
+    def mean_intervention(self) -> float:
+        return sum(self.interventions) / len(self.interventions) if self.interventions else 0.0
 
 
 class RunMonitor(Node):
@@ -185,6 +223,9 @@ class RunMonitor(Node):
 
         self._odom_sub = None
         self._imu_sub  = None
+        self._latest_heuristic_acc = None 
+        self._heur_sub = None
+        self._acc_sub = None
 
     # ── ROS callbacks ─────────────────────────────────────────────────────────
 
@@ -281,6 +322,31 @@ class RunMonitor(Node):
                     self.result.duration_s = self.latest_time - self._start_time
                 self.done.set()
 
+    def _heur_cb(self, msg: Twist):
+        if self.done.is_set():
+            return
+        with self._lock:
+            self._latest_heuristic_acc = msg
+
+    def _acc_cb(self, msg: Twist):
+        if self.done.is_set():
+            return
+        with self._lock:
+            # Only track interventions once in flight and if we have a baseline
+            if not self._mission_armed or self._latest_heuristic_acc is None:
+                return
+            
+            ref = self._latest_heuristic_acc
+            dx = msg.linear.x - ref.linear.x
+            dy = msg.linear.y - ref.linear.y
+            dz = msg.linear.z - ref.linear.z
+            dax = msg.angular.x - ref.angular.x
+            day = msg.angular.y - ref.angular.y
+            daz = msg.angular.z - ref.angular.z
+            
+            l2_err = (dx**2 + dy**2 + dz**2 + dax**2 + day**2 + daz**2) ** 0.5
+            self.result.interventions.append(l2_err)
+
     # ── Lifecycle ─────────────────────────────────────────────────────────────
 
     def subscribe(self,
@@ -290,12 +356,18 @@ class RunMonitor(Node):
         # Applied QoS profiles to match best-effort sensor data
         self._odom_sub = self.create_subscription(Odometry, odom_topic, self._odom_cb, qos_profile_sensor_data)
         self._imu_sub  = self.create_subscription(Imu, imu_topic, self._imu_cb, qos_profile_sensor_data)
+        self._heur_sub = self.create_subscription(Twist, '/rmf/cmd/heuristic_acc', self._heur_cb, 10)
+        self._acc_sub  = self.create_subscription(Twist, '/rmf/cmd/acc', self._acc_cb, 10)
 
     def unsubscribe(self):
         if self._odom_sub:
             self.destroy_subscription(self._odom_sub)
         if self._imu_sub:
             self.destroy_subscription(self._imu_sub)
+        if self._heur_sub:
+            self.destroy_subscription(self._heur_sub)
+        if self._acc_sub:
+            self.destroy_subscription(self._acc_sub)
 
 
 # ── Top-level single-run function ─────────────────────────────────────────────

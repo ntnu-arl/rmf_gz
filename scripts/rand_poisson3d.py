@@ -59,7 +59,7 @@ if __name__ == '__main__':
     # SPEED CAP SETTINGS
     # Change TARGET_RTF to test your hardware limit (e.g., 2.0, 3.0, 5.0)
     # ---------------------------------------------------------
-    TARGET_RTF = 4.0  
+    TARGET_RTF = 1.0  
     STEP_SIZE = 0.001 # This must match your <max_step_size>
 
     # Set real_time_factor (The target speed multiplier)

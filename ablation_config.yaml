@@ -2,30 +2,35 @@
 # META-SUPERVISOR SETTINGS (Batch Control)
 # ==============================================================
 ablation:
-  runs_per_density: 50
-  densities: [1.5, 1.8, 2.0, 3.0]
-  radii: [0.5, 0.4, 0.3, 0.2]
+  runs_per_density: 100
+  densities: [2.0] #[1.5, 1.75, 2.0, 2.5, 3.0]
+  radii: [0.5] #[0.5, 0.3, 0.1]
   experiment_script_path: "src/rmf_gz/run_experiment.py"
-  controller_script_path: "~/nCBF3D/nCBF3D/G_ROS_interface/sim_node_lidar_ros2.py"
+  #controller_script_path: "/home/arl/nCBF3D/nCBF3D/G_ROS_interface/ROS2/sim_node_lidar.py"
+  controller_script_path: "/home/arl/nCBF3D/nCBF3D/G_ROS_interface/ROS2/sim_node_lidar_regression.py"
+  #controller_script_path: "/home/arl/nCBF3D/nCBF3D/G_ROS_interface/ROS2/sim_node_lidar_ccbf.py"
+  #controller_script_path: "/home/arl/nCBF3D/nCBF3D/G_ROS_interface/ROS2/sim_node_lidar_daf.py"
 
 
 # ===========================================================
 # Setting for ablation across controllers
 # ===========================================================
-controllers: ["heuristic"] # ["heuristic", "blind", "random"]
-USE_PASSTHROUGH: False # if to disable the safety filter and just use the heuristic above
+controllers: ["heuristic"]  #["heuristic", "blind", "random", "ego"]
+# "ego": EGO-Planner reference controller (Zhou et al., ICRA 2021), ported in
+#        nCBF3D/G_ROS_interface/classes/ego_planner.py
+USE_PASSTHROUGH: false # if to disable the safety filter and just use the heuristic above
 
 
 # ==============================================================
 # Settings for ablation across lidar rate
 # ==============================================================
-lidar_rates: [20, 3, 1]
+lidar_rates: [20] #[20, 3, 1]
 
 
 # ==============================================================
 # Settings for ablation across lidar freuquency
 # ==============================================================
-lidar_noise_scale: [0.0, 1.0, 2.0, 3.0]
+lidar_noise_scale: [0.0] #[0.0, 1.0, 3.0]
 
 
 # ==============================================================
@@ -33,7 +38,7 @@ lidar_noise_scale: [0.0, 1.0, 2.0, 3.0]
 # ==============================================================
 simulation:
   world_name: "random3d"
-  headless: true
+  headless: false
   robot_name: "rmf"
   run_timeout_s: 100.0
   spawn_pose:

@@ -17,7 +17,7 @@ Termination conditions (per run):
 Statistics reported:
     success_rate, collision_rate, timeout_rate,
     mean_velocity (m/s), max_velocity (m/s),
-    mean_max_x (m), mean_duration (s)
+    mean_max_x (m), mean_duration (s), mean_intervention
 """
 
 import argparse
@@ -62,6 +62,9 @@ class ExperimentStats:
     mean_duration:  float = 0.0   # mean run duration (s)
     std_duration:   float = 0.0
 
+    mean_intervention: float = 0.0
+    std_intervention:  float = 0.0
+
     runs: List[dict] = field(default_factory=list)   # per-run records
 
 
@@ -90,6 +93,7 @@ def compute_stats(results: List[RunResult]) -> ExperimentStats:
     mean_vels  = [r.mean_velocity for r in results]
     max_xs     = [r.max_x         for r in results]
     durations  = [r.duration_s    for r in results]
+    mean_ints  = [r.mean_intervention for r in results]
 
     s.mean_velocity = sum(mean_vels) / s.n_runs
     s.std_velocity  = _stddev(mean_vels, s.mean_velocity)
@@ -101,6 +105,9 @@ def compute_stats(results: List[RunResult]) -> ExperimentStats:
     s.mean_duration = sum(durations) / s.n_runs
     s.std_duration  = _stddev(durations, s.mean_duration)
 
+    s.mean_intervention = sum(mean_ints) / s.n_runs
+    s.std_intervention  = _stddev(mean_ints, s.mean_intervention)
+
     s.runs = [
         {
             "run":        i + 1,
@@ -109,6 +116,7 @@ def compute_stats(results: List[RunResult]) -> ExperimentStats:
             "mean_v_mps": round(r.mean_velocity,   3),
             "max_v_mps":  round(r.max_velocity,    3),
             "duration_s": round(r.duration_s,      2),
+            "mean_int":   round(r.mean_intervention, 4),
         }
         for i, r in enumerate(results)
     ]
@@ -145,7 +153,8 @@ def print_live_summary(run_idx: int, result: RunResult):
         f"max_x={result.max_x:6.2f} m  "
         f"mean_v={result.mean_velocity:5.2f} m/s  "
         f"max_v={result.max_velocity:5.2f} m/s  "
-        f"t={result.duration_s:6.1f} s"
+        f"t={result.duration_s:6.1f} s  "
+        f"int={result.mean_intervention:5.2f}"
     )
 
 
@@ -172,9 +181,10 @@ def print_final_report(s: ExperimentStats, elapsed_total: float):
     print(f"\n  {BOLD}x-displacement  (m){RST}")
     print(f"  Mean max-x          : {CYAN}{s.mean_max_x:7.3f}{RST}  ± {s.std_max_x:.3f}")
 
-    # Duration
-    print(f"\n  {BOLD}Run duration  (s){RST}")
-    print(f"  Mean                : {CYAN}{s.mean_duration:7.2f}{RST}  ± {s.std_duration:.2f}")
+    # Duration & Intervention
+    print(f"\n  {BOLD}Other Metrics{RST}")
+    print(f"  Mean Duration (s)   : {CYAN}{s.mean_duration:7.2f}{RST}  ± {s.std_duration:.2f}")
+    print(f"  Mean Intervention   : {CYAN}{s.mean_intervention:7.4f}{RST}  ± {s.std_intervention:.4f}")
 
     print(f"\n  Total wall time     : {elapsed_total/60:.1f} min")
     print(f"{'═'*60}\n")
@@ -285,6 +295,8 @@ def _save_results(stats: ExperimentStats, path: str):
             "std_max_x":      round(stats.std_max_x,      4),
             "mean_duration":  round(stats.mean_duration,  4),
             "std_duration":   round(stats.std_duration,   4),
+            "mean_intervention": round(stats.mean_intervention, 4),
+            "std_intervention":  round(stats.std_intervention,  4),
         },
         "runs": stats.runs,
     }

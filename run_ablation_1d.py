@@ -24,6 +24,9 @@ def generate_temp_config(base_cfg: dict, active_params: dict, temp_path: str):
     run_cfg['USE_HEURISTIC'] = (ctrl == "heuristic")
     run_cfg['USE_BLIND']     = (ctrl == "blind")
     run_cfg['USE_RANDOM']    = (ctrl == "random")
+    # "ego" swaps the heuristic reference controller for EGO-Planner
+    # (nCBF3D/G_ROS_interface/classes/ego_planner.py)
+    run_cfg['USE_EGO']       = (ctrl == "ego")
     
     # 2. Resolve Lidar Rate
     run_cfg['LIDAR_RATE'] = float(active_params['lidar_rate'])
@@ -45,7 +48,7 @@ def scorched_earth_cleanup():
     """Deep clean between parameter batches to prevent zombie accumulation."""
     print("🧹 Executing Surgically Precise Scorched Earth Cleanup...")
     kill_commands = [
-        "pkill -9 -f sim_node_lidar_ros2.py",
+        "pkill -9 -f sim_node_lidar",   # matches the controllers actually in use
         "pkill -9 -x gz", "pkill -9 -x ruby", "pkill -9 -f 'gz sim'",
         "pkill -9 -x ros_gz_bridge", "pkill -9 -x parameter_bridge", "pkill -9 -x image_bridge",
         "pkill -9 -f static_transform_publisher", "pkill -9 -f robot_state_publisher", "pkill -9 -f 'ros2 launch'",
