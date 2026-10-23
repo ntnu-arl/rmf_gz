@@ -36,6 +36,12 @@ if __name__ == '__main__':
         default=0.5,
         help='Radius of the spherical obstacles (default: 0.5).'
     )
+    parser.add_argument(
+        '--seed', '-s',
+        type=int,
+        default=None,
+        help='Base random seed (default: random per run).'
+    )
     args = parser.parse_args()
 
     ## load the SDF file
@@ -80,8 +86,9 @@ if __name__ == '__main__':
     poisson_radius = args.radius
     chunks_radius = [poisson_radius] * 3 # choose density form 1.5 to 3.0 for a good distribution
     
-    # Generate a random base seed for this specific run
-    base_seed = np.random.randint(0, 1000000) 
+    # Generate a random base seed for this specific run unless one is given
+    base_seed = args.seed if args.seed is not None else np.random.randint(0, 1000000)
+    print(f'base seed: {base_seed}')
     
     poisson_domain_size = 8
     x_offset = 2 + poisson_domain_size / 2

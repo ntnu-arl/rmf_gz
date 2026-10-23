@@ -36,6 +36,7 @@ try:
     from nav_msgs.msg import Odometry
     from sensor_msgs.msg import Imu
     from geometry_msgs.msg import Twist
+    from std_msgs.msg import Float32MultiArray
     ROS_AVAILABLE = True
 except ImportError:
     ROS_AVAILABLE = False
@@ -87,6 +88,15 @@ def cleanup():
             proc.wait()
 
     # 3. AGGRESSIVE CLEANUP: nuke anything orphaned by a group kill that missed.
+    #    Skipped when running parallel environments (run_ablation_parallel.py):
+    #    these patterns match by process NAME, so one slot finishing a run would
+    #    kill every other slot's Gazebo and bridges. The process-group teardown
+    #    above is correctly scoped and is sufficient on its own. Unset by
+    #    default, so the sequential path behaves exactly as before.
+    if os.environ.get("SIM_RUNNER_NO_GLOBAL_SWEEP") == "1":
+        time.sleep(1.0)
+        return
+
     #    Same list as scorched_earth_cleanup() in the ablation drivers -- in
     #    particular the ros_gz bridges, which the previous `killall ros2 ruby gz
     #    ign` did not match at all. `killall -9 ros2` is deliberately NOT used:
@@ -176,6 +186,51 @@ class RunResult:
     timeout:    bool     = False
     success:    bool     = False
 
+    # Safety filter diagnostics (filters publishing on FILTER_DIAG_TOPIC only),
+    # counted per filter tick during the mission
+    filter_ticks:       int  = 0
+    n_solver_fail:      int  = 0      # solver did not return a solution
+    n_cbf_violated:     int  = 0      # a soft CBF row needed a slack
+    n_fov_violated:     int  = 0      # a soft FOV row needed a slack
+    n_infeasible:       int  = 0      # any of the three above
+    n_unsafe:           int  = 0      # min CBF value of the selected certificate < 0
+    cert_age_counts:    list = field(default_factory=list)  # ticks per certificate age (0 = newest)
+
+    def _rate(self, n: int) -> Optional[float]:
+        return n / self.filter_ticks if self.filter_ticks else None
+
+    @property
+    def infeasible_rate(self) -> Optional[float]:
+        return self._rate(self.n_infeasible)
+
+    @property
+    def unsafe_rate(self) -> Optional[float]:
+        return self._rate(self.n_unsafe)
+
+    def filter_record(self) -> dict:
+        '''Filter diagnostics of this run as a flat, JSON-ready dict (counts and rates).'''
+        return {
+            "filter_ticks":        self.filter_ticks,
+            "n_solver_fail":       self.n_solver_fail,
+            "n_cbf_violated":      self.n_cbf_violated,
+            "n_fov_violated":      self.n_fov_violated,
+            "n_infeasible":        self.n_infeasible,
+            "n_unsafe":            self.n_unsafe,
+            "infeasible_rate":     _round(self.infeasible_rate),
+            "solver_fail_rate":    _round(self._rate(self.n_solver_fail)),
+            "cbf_violated_rate":   _round(self._rate(self.n_cbf_violated)),
+            "fov_violated_rate":   _round(self._rate(self.n_fov_violated)),
+            "unsafe_rate":         _round(self.unsafe_rate),
+            "cert_age_counts":     list(self.cert_age_counts),
+        }
+
+    def load_filter_record(self, rec: dict):
+        '''Inverse of filter_record; missing keys (other controllers, errored runs) leave the defaults.'''
+        for key in ("filter_ticks", "n_solver_fail", "n_cbf_violated", "n_fov_violated",
+                    "n_infeasible", "n_unsafe"):
+            setattr(self, key, int(rec.get(key, 0)))
+        self.cert_age_counts = list(rec.get("cert_age_counts", []))
+
     @property
     def mean_velocity(self) -> float:
         return sum(self.velocities) / len(self.velocities) if self.velocities else 0.0
@@ -187,6 +242,14 @@ class RunResult:
     @property
     def mean_intervention(self) -> float:
         return sum(self.interventions) / len(self.interventions) if self.interventions else 0.0
+
+
+def _round(x: Optional[float], nd: int = 4) -> Optional[float]:
+    return None if x is None else round(x, nd)
+
+
+# [solver_failed, cbf_violated, fov_violated, h_min, cert_age, n_buffered], see sim_node_lidar2.py
+FILTER_DIAG_TOPIC = '/rmf/filter/diag'
 
 
 class RunMonitor(Node):
@@ -226,6 +289,7 @@ class RunMonitor(Node):
         self._latest_heuristic_acc = None 
         self._heur_sub = None
         self._acc_sub = None
+        self._diag_sub = None
 
     # ── ROS callbacks ─────────────────────────────────────────────────────────
 
@@ -347,6 +411,26 @@ class RunMonitor(Node):
             l2_err = (dx**2 + dy**2 + dz**2 + dax**2 + day**2 + daz**2) ** 0.5
             self.result.interventions.append(l2_err)
 
+    def _diag_cb(self, msg: Float32MultiArray):
+        if self.done.is_set():
+            return
+        failed, cbf_v, fov_v, h_min, age = msg.data[:5]
+        age = int(round(age))
+        with self._lock:
+            # count the same mission window as the interventions
+            if not self._mission_armed:
+                return
+            r = self.result
+            r.filter_ticks   += 1
+            r.n_solver_fail  += failed > 0.5
+            r.n_cbf_violated += cbf_v > 0.5
+            r.n_fov_violated += fov_v > 0.5
+            r.n_infeasible   += (failed > 0.5) or (cbf_v > 0.5) or (fov_v > 0.5)
+            r.n_unsafe       += h_min < 0.0
+            if age >= len(r.cert_age_counts):
+                r.cert_age_counts.extend([0] * (age + 1 - len(r.cert_age_counts)))
+            r.cert_age_counts[age] += 1
+
     # ── Lifecycle ─────────────────────────────────────────────────────────────
 
     def subscribe(self,
@@ -358,6 +442,7 @@ class RunMonitor(Node):
         self._imu_sub  = self.create_subscription(Imu, imu_topic, self._imu_cb, qos_profile_sensor_data)
         self._heur_sub = self.create_subscription(Twist, '/rmf/cmd/heuristic_acc', self._heur_cb, 10)
         self._acc_sub  = self.create_subscription(Twist, '/rmf/cmd/acc', self._acc_cb, 10)
+        self._diag_sub = self.create_subscription(Float32MultiArray, FILTER_DIAG_TOPIC, self._diag_cb, 50)
 
     def unsubscribe(self):
         if self._odom_sub:
@@ -368,6 +453,30 @@ class RunMonitor(Node):
             self.destroy_subscription(self._heur_sub)
         if self._acc_sub:
             self.destroy_subscription(self._acc_sub)
+        if self._diag_sub:
+            self.destroy_subscription(self._diag_sub)
+
+
+# ── Per-run report ────────────────────────────────────────────────────────────
+
+def print_run_statistics(r: RunResult):
+    '''Print the statistics of one finished run, including the safety filter diagnostics if any.'''
+    print(f"\n  ── Run statistics ──────────────────────────────────────")
+    print(f"  Outcome             : {r.exit_code.name}")
+    print(f"  max x / duration    : {r.max_x:.2f} m / {r.duration_s:.1f} s")
+    print(f"  velocity mean / max : {r.mean_velocity:.2f} / {r.max_velocity:.2f} m/s")
+    print(f"  mean intervention   : {r.mean_intervention:.4f}")
+    if r.filter_ticks:
+        rate = lambda n: f"{n / r.filter_ticks * 100:6.2f}%  ({n}/{r.filter_ticks})"
+        print(f"  filter ticks        : {r.filter_ticks}")
+        print(f"  QP infeasible       : {rate(r.n_infeasible)}")
+        print(f"    solver failed     : {rate(r.n_solver_fail)}")
+        print(f"    CBF slack         : {rate(r.n_cbf_violated)}")
+        print(f"    FOV slack         : {rate(r.n_fov_violated)}")
+        print(f"  certificate h < 0   : {rate(r.n_unsafe)}")
+        print("  certificate age     : " + "  ".join(f"{age}:{n / r.filter_ticks * 100:.1f}%"
+                                                     for age, n in enumerate(r.cert_age_counts)))
+    print(f"  ────────────────────────────────────────────────────────", flush=True)
 
 
 # ── Top-level single-run function ─────────────────────────────────────────────
@@ -516,6 +625,7 @@ def run_single(
             except Exception as e:
                 print(f"  [!] Clean teardown warning: {e}")
 
+    print_run_statistics(result)
     return result
 
 
@@ -548,7 +658,4 @@ if __name__ == "__main__":
         headless_override=cli_headless,
         timeout_override=args.timeout,
     )
-    print(f"\nResult: {r.exit_code.name}  |  max_x={r.max_x:.2f} m  "
-          f"|  mean_v={r.mean_velocity:.2f} m/s  |  max_v={r.max_velocity:.2f} m/s  "
-          f"|  duration={r.duration_s:.1f} s")
     sys.exit(int(r.exit_code))

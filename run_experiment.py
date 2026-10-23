@@ -29,11 +29,11 @@ import time
 import subprocess
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 # Ensure sim_runner is importable from the same directory
 sys.path.insert(0, str(Path(__file__).parent))
-from sim_runner import ExitCode, RunResult, run_single
+from sim_runner import ExitCode, RunResult, run_single, _round
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -64,6 +64,20 @@ class ExperimentStats:
 
     mean_intervention: float = 0.0
     std_intervention:  float = 0.0
+
+    # Safety filter diagnostics, over the runs whose filter published them
+    # (None if no run did): mean/std of the per-run rates, and the certificate
+    # age distribution pooled over all filter ticks (index 0 = newest observation)
+    n_filter_runs:          int   = 0
+    filter_ticks:           int   = 0
+    mean_infeasible_rate:   Optional[float] = None
+    std_infeasible_rate:    Optional[float] = None
+    mean_solver_fail_rate:  Optional[float] = None
+    mean_cbf_violated_rate: Optional[float] = None
+    mean_fov_violated_rate: Optional[float] = None
+    mean_unsafe_rate:       Optional[float] = None
+    std_unsafe_rate:        Optional[float] = None
+    cert_age_distribution:  Optional[List[float]] = None
 
     runs: List[dict] = field(default_factory=list)   # per-run records
 
@@ -108,6 +122,8 @@ def compute_stats(results: List[RunResult]) -> ExperimentStats:
     s.mean_intervention = sum(mean_ints) / s.n_runs
     s.std_intervention  = _stddev(mean_ints, s.mean_intervention)
 
+    compute_filter_stats(s, results)
+
     s.runs = [
         {
             "run":        i + 1,
@@ -117,10 +133,37 @@ def compute_stats(results: List[RunResult]) -> ExperimentStats:
             "max_v_mps":  round(r.max_velocity,    3),
             "duration_s": round(r.duration_s,      2),
             "mean_int":   round(r.mean_intervention, 4),
+            **r.filter_record(),
         }
         for i, r in enumerate(results)
     ]
     return s
+
+
+def compute_filter_stats(s: ExperimentStats, results: List[RunResult]):
+    '''Safety filter diagnostics; only runs whose filter published them count.'''
+    fr = [r for r in results if r.filter_ticks > 0]
+    s.n_filter_runs = len(fr)
+    if not fr:
+        return
+    s.filter_ticks = sum(r.filter_ticks for r in fr)
+
+    def mean_std(rates):
+        m = sum(rates) / len(rates)
+        return m, _stddev(rates, m)
+
+    s.mean_infeasible_rate, s.std_infeasible_rate = mean_std([r.infeasible_rate for r in fr])
+    s.mean_unsafe_rate,     s.std_unsafe_rate     = mean_std([r.unsafe_rate     for r in fr])
+    s.mean_solver_fail_rate,  _ = mean_std([r.n_solver_fail  / r.filter_ticks for r in fr])
+    s.mean_cbf_violated_rate, _ = mean_std([r.n_cbf_violated / r.filter_ticks for r in fr])
+    s.mean_fov_violated_rate, _ = mean_std([r.n_fov_violated / r.filter_ticks for r in fr])
+
+    counts = [0] * max(len(r.cert_age_counts) for r in fr)
+    for r in fr:
+        for age, n in enumerate(r.cert_age_counts):
+            counts[age] += n
+    total = sum(counts)
+    s.cert_age_distribution = [n / total for n in counts] if total else None
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -155,6 +198,8 @@ def print_live_summary(run_idx: int, result: RunResult):
         f"max_v={result.max_velocity:5.2f} m/s  "
         f"t={result.duration_s:6.1f} s  "
         f"int={result.mean_intervention:5.2f}"
+        + (f"  infeas={result.infeasible_rate*100:5.1f}%  unsafe={result.unsafe_rate*100:5.1f}%"
+           if result.filter_ticks else "")
     )
 
 
@@ -185,6 +230,16 @@ def print_final_report(s: ExperimentStats, elapsed_total: float):
     print(f"\n  {BOLD}Other Metrics{RST}")
     print(f"  Mean Duration (s)   : {CYAN}{s.mean_duration:7.2f}{RST}  ± {s.std_duration:.2f}")
     print(f"  Mean Intervention   : {CYAN}{s.mean_intervention:7.4f}{RST}  ± {s.std_intervention:.4f}")
+
+    if s.n_filter_runs:
+        print(f"\n  {BOLD}Safety filter  ({s.n_filter_runs} runs, {s.filter_ticks} ticks, mean of run rates){RST}")
+        print(f"  QP infeasible       : {CYAN}{s.mean_infeasible_rate*100:6.2f}%{RST}  ± {s.std_infeasible_rate*100:.2f}%"
+              f"   (solver {s.mean_solver_fail_rate*100:.2f}%, CBF {s.mean_cbf_violated_rate*100:.2f}%,"
+              f" FOV {s.mean_fov_violated_rate*100:.2f}%)")
+        print(f"  Certificate h < 0   : {CYAN}{s.mean_unsafe_rate*100:6.2f}%{RST}  ± {s.std_unsafe_rate*100:.2f}%")
+        if s.cert_age_distribution:
+            print("  Certificate age     : " + "  ".join(f"{age}:{p*100:.1f}%"
+                                                         for age, p in enumerate(s.cert_age_distribution)))
 
     print(f"\n  Total wall time     : {elapsed_total/60:.1f} min")
     print(f"{'═'*60}\n")
@@ -297,6 +352,17 @@ def _save_results(stats: ExperimentStats, path: str):
             "std_duration":   round(stats.std_duration,   4),
             "mean_intervention": round(stats.mean_intervention, 4),
             "std_intervention":  round(stats.std_intervention,  4),
+            "n_filter_runs":          stats.n_filter_runs,
+            "filter_ticks":           stats.filter_ticks,
+            "mean_infeasible_rate":   _round(stats.mean_infeasible_rate),
+            "std_infeasible_rate":    _round(stats.std_infeasible_rate),
+            "mean_solver_fail_rate":  _round(stats.mean_solver_fail_rate),
+            "mean_cbf_violated_rate": _round(stats.mean_cbf_violated_rate),
+            "mean_fov_violated_rate": _round(stats.mean_fov_violated_rate),
+            "mean_unsafe_rate":       _round(stats.mean_unsafe_rate),
+            "std_unsafe_rate":        _round(stats.std_unsafe_rate),
+            "cert_age_distribution":  (None if stats.cert_age_distribution is None
+                                       else [round(p, 4) for p in stats.cert_age_distribution]),
         },
         "runs": stats.runs,
     }
@@ -338,14 +404,18 @@ def _parse():
                    help="Poisson disk radius for the world generation script")
     p.add_argument("--sphere_radius",   "-sr", type=float, default=0.5,
                    help="obstacle radius for the world generation script")
-    p.add_argument("--world-gen",      default=str(Path(__file__).parent / "scripts/rand_poisson3d.py"),
-                   help="Path to the world generation script")
+    p.add_argument("--world-gen",      default=None,
+                   help="Path to the world generation script (default: scripts/rand_poisson2d.py "
+                        "if the world name contains '2d', else rand_poisson3d.py)")
     return p.parse_args()
 
 
 if __name__ == "__main__":
     args = _parse()
-    
+    if args.world_gen is None:
+        gen_name = "rand_poisson2d.py" if "2d" in args.world else "rand_poisson3d.py"
+        args.world_gen = str(Path(__file__).parent / "scripts" / gen_name)
+
     output_file = args.output
     if output_file:
         p = Path(output_file)

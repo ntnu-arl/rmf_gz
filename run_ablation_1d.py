@@ -97,7 +97,14 @@ def main():
     radii_list   = master_cfg['ablation'].get('radii', [0.5])
     
     exp_script   = os.path.abspath(os.path.expanduser(master_cfg['ablation']['experiment_script_path']))
-    ctrl_script  = os.path.abspath(os.path.expanduser(master_cfg['ablation']['controller_script_path']))
+    # Controller script(s): `controller_script_paths` (list, ablated over; results are
+    # nested per script) or the legacy single `controller_script_path` (flat layout).
+    if 'controller_script_paths' in master_cfg['ablation']:
+        ctrl_scripts = [os.path.abspath(os.path.expanduser(c)) for c in master_cfg['ablation']['controller_script_paths']]
+        nest_by_script = True
+    else:
+        ctrl_scripts = [os.path.abspath(os.path.expanduser(master_cfg['ablation']['controller_script_path']))]
+        nest_by_script = False
     world_name   = master_cfg['simulation'].get('world_name', 'random3d')
     timeout      = str(master_cfg['simulation'].get('run_timeout_s', 100.0))
     is_headless  = master_cfg['simulation'].get('headless', False)
@@ -123,77 +130,85 @@ def main():
 
     scorched_earth_cleanup()
 
-    for sweep_name, param_list, param_key in sweeps:
-        print(f"\n\n{'#'*70}")
-        print(f"🔀 ENTERING SWEEP BRANCH: {sweep_name}")
-        print(f"{'#'*70}")
+    for ctrl_script in ctrl_scripts:
+        script_tag = Path(ctrl_script).stem if nest_by_script else ""
+        # State tracking for the baseline auto-copy feature (per controller script)
+        has_run_baseline = False
+        baseline_source_dir = None
+        if nest_by_script:
+            print(f"\n{'='*70}\n🧠 CONTROLLER SCRIPT: {ctrl_script}\n{'='*70}")
 
-        for val in param_list:
-            current_params = baseline_params.copy()
-            current_params[param_key] = val
+        for sweep_name, param_list, param_key in sweeps:
+            print(f"\n\n{'#'*70}")
+            print(f"🔀 ENTERING SWEEP BRANCH: {sweep_name}")
+            print(f"{'#'*70}")
+
+            for val in param_list:
+                current_params = baseline_params.copy()
+                current_params[param_key] = val
             
-            # Define structured output directory for JSONs
-            safe_val_str = str(val).replace('.', '_')
-            output_dir = Path(args.outdir) / sweep_name / f"{param_key}_{safe_val_str}"
-            output_dir.mkdir(parents=True, exist_ok=True)
+                # Define structured output directory for JSONs
+                safe_val_str = str(val).replace('.', '_')
+                output_dir = Path(args.outdir) / script_tag / sweep_name / f"{param_key}_{safe_val_str}"
+                output_dir.mkdir(parents=True, exist_ok=True)
             
-            # --- BASELINE CACHE LOGIC ---
-            if current_params == baseline_params:
-                if has_run_baseline and baseline_source_dir:
-                    print(f"  [⏭️] Skipping {param_key}={val} (Baseline already evaluated).")
-                    print(f"  [📁] Copying cached baseline results to {output_dir}")
+                # --- BASELINE CACHE LOGIC ---
+                if current_params == baseline_params:
+                    if has_run_baseline and baseline_source_dir:
+                        print(f"  [⏭️] Skipping {param_key}={val} (Baseline already evaluated).")
+                        print(f"  [📁] Copying cached baseline results to {output_dir}")
                     
-                    # Programmatically copy the baseline JSONs to the new ablation directory
-                    for item in os.listdir(baseline_source_dir):
-                        if item.endswith('.json'):
-                            shutil.copy(os.path.join(baseline_source_dir, item), os.path.join(output_dir, item))
-                    continue
+                        # Programmatically copy the baseline JSONs to the new ablation directory
+                        for item in os.listdir(baseline_source_dir):
+                            if item.endswith('.json'):
+                                shutil.copy(os.path.join(baseline_source_dir, item), os.path.join(output_dir, item))
+                        continue
                 
-                has_run_baseline = True
-                baseline_source_dir = output_dir # Save the location for future copies
-                run_label = "BASELINE"
-            else:
-                run_label = f"{param_key.upper()} = {val}"
+                    has_run_baseline = True
+                    baseline_source_dir = output_dir # Save the location for future copies
+                    run_label = "BASELINE"
+                else:
+                    run_label = f"{param_key.upper()} = {val}"
 
-            print(f"\n{'-'*60}")
-            print(f"⚙️ PREPARING BATCH: {run_label}")
-            print(f"   State: Ctrl={current_params['controller']}, Rate={current_params['lidar_rate']}, Noise={current_params['noise']}, S_Rad={current_params['sphere_radius']}")
-            print(f"{'-'*60}")
+                print(f"\n{'-'*60}")
+                print(f"⚙️ PREPARING BATCH: {run_label}")
+                print(f"   State: Ctrl={current_params['controller']}, Rate={current_params['lidar_rate']}, Noise={current_params['noise']}, S_Rad={current_params['sphere_radius']}")
+                print(f"{'-'*60}")
 
-            generate_temp_config(master_cfg, current_params, temp_config_path)
-            base_output_json = str(output_dir / "results.json")
+                generate_temp_config(master_cfg, current_params, temp_config_path)
+                base_output_json = str(output_dir / "results.json")
 
-            # ONLY loop over densities now. The sphere radius is locked for this specific run.
-            active_sphere_radius = current_params['sphere_radius']
+                # ONLY loop over densities now. The sphere radius is locked for this specific run.
+                active_sphere_radius = current_params['sphere_radius']
 
-            for density in densities:
-                print(f"\n▶️ Density {density} | Sphere Radius {active_sphere_radius} | Runs: {num_runs}")
+                for density in densities:
+                    print(f"\n▶️ Density {density} | Sphere Radius {active_sphere_radius} | Runs: {num_runs}")
                 
-                cmd = [
-                    sys.executable, exp_script, ctrl_script,
-                    "--config", temp_config_path, 
-                    "--runs", str(num_runs),
-                    "--world", world_name,
-                    "--radius", str(density),
-                    "--sphere_radius", str(active_sphere_radius),
-                    "--timeout", timeout,
-                    "--output", base_output_json
-                ]
+                    cmd = [
+                        sys.executable, exp_script, ctrl_script,
+                        "--config", temp_config_path, 
+                        "--runs", str(num_runs),
+                        "--world", world_name,
+                        "--radius", str(density),
+                        "--sphere_radius", str(active_sphere_radius),
+                        "--timeout", timeout,
+                        "--output", base_output_json
+                    ]
                 
-                if is_headless:
-                    cmd.append("--headless")
+                    if is_headless:
+                        cmd.append("--headless")
                 
-                try:
-                    subprocess.run(cmd, check=True)
-                except subprocess.CalledProcessError as e:
-                    print(f"\n[!] Density {density} with sphere radius {active_sphere_radius} failed with exit code {e.returncode}.")
-                except KeyboardInterrupt:
-                    print("\n[!] Pipeline interrupted by user. Aborting...")
+                    try:
+                        subprocess.run(cmd, check=True)
+                    except subprocess.CalledProcessError as e:
+                        print(f"\n[!] Density {density} with sphere radius {active_sphere_radius} failed with exit code {e.returncode}.")
+                    except KeyboardInterrupt:
+                        print("\n[!] Pipeline interrupted by user. Aborting...")
+                        scorched_earth_cleanup()
+                        if os.path.exists(temp_config_path): os.remove(temp_config_path)
+                        sys.exit(1)
+                
                     scorched_earth_cleanup()
-                    if os.path.exists(temp_config_path): os.remove(temp_config_path)
-                    sys.exit(1)
-                
-                scorched_earth_cleanup()
 
     if os.path.exists(temp_config_path):
         os.remove(temp_config_path)

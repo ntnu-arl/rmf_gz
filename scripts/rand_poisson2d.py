@@ -1,30 +1,50 @@
-#!/usr/bin/env python3
 import xml.etree.ElementTree as ET
 import trimesh
 import numpy as np
 import scipy as sp
+import scipy.stats
 import os
 import copy
-from ament_index_python.packages import get_package_share_directory
+import argparse
 
-
-PATH_RESOURCES = os.path.join(get_package_share_directory('rmf_gz'), 'resources')
-PATH_WORLDS = os.path.join(PATH_RESOURCES, 'worlds')
-PATH_MODELS = os.path.join(PATH_RESOURCES, 'environment_assets')
-
+PATH_RESOURCES = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../resources')
+PATH_WORLDS = os.path.join(PATH_RESOURCES, 'worlds/')
+PATH_MODELS = os.path.join(PATH_RESOURCES, 'environment_assets/')
 
 ## generate random pose values
 def random_poses(n, radius, range, seed=None):
     poisson_engine = sp.stats.qmc.PoissonDisk(
         d=2,
         radius=radius / range,
-        ncandidates=500,
+        ncandidates=100,
         seed=seed,
     )
     return (poisson_engine.random(n) - np.array([0.5, 0.5])) * range
 
-
 if __name__ == '__main__':
+    ## Set up argument parsing
+    parser = argparse.ArgumentParser(description='Generate a random SDF world with vertical pillars using 2D Poisson disk sampling.')
+    parser.add_argument(
+        '--radius', '-r',
+        type=float,
+        default=3.0,
+        help='Poisson disk radius for obstacle generation (choose density from 1.5 to 3.0). Default is 3.0.'
+    )
+    parser.add_argument(
+        '--pillar_radius', '--sphere_radius', '-pr', '-sr',
+        dest='pillar_radius',
+        type=float,
+        default=0.5,
+        help='Radius of the vertical pillar obstacles (default: 0.5).'
+    )
+    parser.add_argument(
+        '--seed', '-s',
+        type=int,
+        default=None,
+        help='Base random seed (default: random per run).'
+    )
+    args = parser.parse_args()
+
     ## load the SDF file
     tree = ET.parse(os.path.join(PATH_WORLDS, 'empty.sdf'))
     root = tree.getroot()
@@ -34,18 +54,53 @@ if __name__ == '__main__':
     if world is None:
         raise ValueError('no <world> element found in the SDF file')
 
+    ## uncap simulation speed
+    physics = world.find('physics')
+    if physics is None:
+        # IGNITION GAZEBO FIX: Default physics tags use type 'ignored' as plugins handle the actual math
+        physics = ET.SubElement(world, 'physics', name='1ms', type='ignored')
+        max_step = ET.SubElement(physics, 'max_step_size')
+        max_step.text = '0.001'
+
+    # ---------------------------------------------------------
+    # SPEED CAP SETTINGS
+    # Change TARGET_RTF to test your hardware limit (e.g., 2.0, 3.0, 5.0)
+    # ---------------------------------------------------------
+    TARGET_RTF = 1.0
+    STEP_SIZE = 0.001 # This must match your <max_step_size>
+
+    # Set real_time_factor (The target speed multiplier)
+    rt_factor = physics.find('real_time_factor')
+    if rt_factor is None:
+        rt_factor = ET.SubElement(physics, 'real_time_factor')
+    rt_factor.text = str(TARGET_RTF)
+
+    # Set real_time_update_rate (How many physics steps per real second to achieve the RTF)
+    rt_update_rate = physics.find('real_time_update_rate')
+    if rt_update_rate is None:
+        rt_update_rate = ET.SubElement(physics, 'real_time_update_rate')
+
+    update_rate_val = int(TARGET_RTF / STEP_SIZE)
+    rt_update_rate.text = str(update_rate_val)
+
     ## add random obstacles
-    chunks_radius = [2] * 2
-    seed = 200
-    poisson_domain_size = 4
+    poisson_radius = args.radius
+    chunks_radius = [poisson_radius] * 3 # choose density form 1.5 to 3.0 for a good distribution
+
+    # Generate a random base seed for this specific run unless one is given
+    base_seed = args.seed if args.seed is not None else np.random.randint(0, 1000000)
+    print(f'base seed: {base_seed}')
+
+    poisson_domain_size = 8
     x_offset = 2 + poisson_domain_size / 2
     meshes = []
-    base_mesh = trimesh.creation.cylinder(radius=0.5, height=poisson_domain_size)
-    for j,r in enumerate(chunks_radius):
-        poisson_obs = random_poses(1000, r, poisson_domain_size, seed+j)
+    # vertical pillar spanning the full corridor height (floor to ceiling)
+    base_mesh = trimesh.creation.cylinder(radius=args.pillar_radius, height=poisson_domain_size)
+
+    for j, r in enumerate(chunks_radius):
+        poisson_obs = random_poses(1000, r, poisson_domain_size, seed=base_seed+j)
         n_obstacles = poisson_obs.shape[0]
         print(f'placing {n_obstacles} obstacles in the chunk {j} (Poisson radius: {r})')
-
         for pos in poisson_obs:
             mesh = base_mesh.copy()
             mesh.apply_translation([pos[0] + x_offset, pos[1], poisson_domain_size / 2])
@@ -54,7 +109,8 @@ if __name__ == '__main__':
         x_offset += poisson_domain_size + 1
 
     ## export dae
-    mesh_filename = os.path.join(PATH_MODELS, 'random_pillars.dae')
+    # IGNITION GAZEBO FIX: Ensure absolute path resolution
+    mesh_filename = os.path.abspath(os.path.join(PATH_MODELS, 'random_pillars.dae'))
     merged_mesh = trimesh.util.concatenate(meshes)
     merged_mesh.export(mesh_filename)
 
@@ -68,13 +124,15 @@ if __name__ == '__main__':
     visual_geom = ET.SubElement(visual, 'geometry')
     visual_mesh = ET.SubElement(visual_geom, 'mesh')
     visual_uri = ET.SubElement(visual_mesh, 'uri')
-    visual_uri.text = f'{mesh_filename}'
+    # IGNITION GAZEBO FIX: Prepend standard file URI protocol
+    visual_uri.text = f'file://{mesh_filename}'
 
     collision = ET.SubElement(link, 'collision', name='merged_collision')
     collision_geom = ET.SubElement(collision, 'geometry')
     collision_mesh = ET.SubElement(collision_geom, 'mesh')
     collision_uri = ET.SubElement(collision_mesh, 'uri')
-    collision_uri.text = f'{mesh_filename}'
+    # IGNITION GAZEBO FIX: Prepend standard file URI protocol
+    collision_uri.text = f'file://{mesh_filename}'
 
     ## update ground
     s_x = len(chunks_radius) * (poisson_domain_size + 1) + 4  # from -1m to 1m past the obstacles
