@@ -1,0 +1,31 @@
+worlds:
+  n: 25
+  seed: 1000
+  poisson_radius:
+  - 1.5
+  - 3.0
+  pillar_radius: 0.5
+method:
+  node: nCBF3D.G_ROS_interface.ROS2.sim_node_lidar_ccbf:CompositeCBFControlNode
+  baseline:
+    CCBF_KAPPA: 80.0
+    CCBF_POLE_0: -2.5
+    CCBF_ALPHA: 2.0
+  grid:
+    CCBF_KAPPA:
+    - 80.0
+    - 160.0
+    - 320.0
+    - 640.0
+    - 1280.0
+    CCBF_POLE_0:
+    - -1.0
+    - -1.75
+    - -2.5
+    - -3.5
+    CCBF_ALPHA:
+    - 0.5
+    - 1.0
+    - 2.0
+    - 4.0
+  fixed: {}

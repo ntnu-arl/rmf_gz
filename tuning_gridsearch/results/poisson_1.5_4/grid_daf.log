@@ -1,0 +1,64 @@
+  daf: 95 settings x 50 worlds, 4750 runs to do
+  4750 runs on 16 workers (cpu)
+
+     100/4750    0.3 min elapsed, ETA  12.9 min  {'COLLISION': 36, 'SUCCESS': 47, 'TIMEOUT': 17}
+     200/4750    0.5 min elapsed, ETA  11.1 min  {'COLLISION': 85, 'SUCCESS': 80, 'TIMEOUT': 35}
+     300/4750    0.7 min elapsed, ETA  10.1 min  {'COLLISION': 149, 'SUCCESS': 84, 'TIMEOUT': 67}
+     400/4750    0.9 min elapsed, ETA   9.3 min  {'COLLISION': 220, 'SUCCESS': 84, 'TIMEOUT': 96}
+     500/4750    1.2 min elapsed, ETA   9.8 min  {'COLLISION': 300, 'SUCCESS': 85, 'TIMEOUT': 115}
+     600/4750    1.4 min elapsed, ETA  10.0 min  {'COLLISION': 345, 'SUCCESS': 104, 'TIMEOUT': 151}
+     700/4750    1.7 min elapsed, ETA   9.8 min  {'COLLISION': 391, 'SUCCESS': 118, 'TIMEOUT': 191}
+     800/4750    2.0 min elapsed, ETA   9.7 min  {'COLLISION': 471, 'SUCCESS': 119, 'TIMEOUT': 210}
+     900/4750    2.2 min elapsed, ETA   9.3 min  {'COLLISION': 543, 'SUCCESS': 121, 'TIMEOUT': 236}
+    1000/4750    2.3 min elapsed, ETA   8.6 min  {'COLLISION': 639, 'SUCCESS': 121, 'TIMEOUT': 240}
+    1100/4750    2.6 min elapsed, ETA   8.6 min  {'COLLISION': 702, 'SUCCESS': 127, 'TIMEOUT': 271}
+    1200/4750    3.0 min elapsed, ETA   8.9 min  {'COLLISION': 737, 'SUCCESS': 157, 'TIMEOUT': 306}
+    1300/4750    3.2 min elapsed, ETA   8.6 min  {'COLLISION': 790, 'SUCCESS': 170, 'TIMEOUT': 340}
+    1400/4750    3.6 min elapsed, ETA   8.5 min  {'COLLISION': 832, 'SUCCESS': 203, 'TIMEOUT': 365}
+    1500/4750    3.9 min elapsed, ETA   8.4 min  {'COLLISION': 862, 'SUCCESS': 235, 'TIMEOUT': 403}
+    1600/4750    4.2 min elapsed, ETA   8.4 min  {'COLLISION': 895, 'SUCCESS': 257, 'TIMEOUT': 448}
+    1700/4750    4.4 min elapsed, ETA   7.9 min  {'COLLISION': 949, 'SUCCESS': 282, 'TIMEOUT': 469}
+    1800/4750    4.6 min elapsed, ETA   7.6 min  {'COLLISION': 981, 'SUCCESS': 312, 'TIMEOUT': 507}
+    1900/4750    4.9 min elapsed, ETA   7.4 min  {'COLLISION': 1032, 'SUCCESS': 328, 'TIMEOUT': 540}
+    2000/4750    5.3 min elapsed, ETA   7.2 min  {'COLLISION': 1058, 'SUCCESS': 375, 'TIMEOUT': 567}
+    2100/4750    5.6 min elapsed, ETA   7.1 min  {'COLLISION': 1113, 'SUCCESS': 384, 'TIMEOUT': 603}
+    2200/4750    5.7 min elapsed, ETA   6.6 min  {'COLLISION': 1210, 'SUCCESS': 384, 'TIMEOUT': 606}
+    2300/4750    6.0 min elapsed, ETA   6.3 min  {'COLLISION': 1285, 'SUCCESS': 384, 'TIMEOUT': 631}
+    2400/4750    6.2 min elapsed, ETA   6.1 min  {'COLLISION': 1340, 'SUCCESS': 410, 'TIMEOUT': 650}
+    2500/4750    6.7 min elapsed, ETA   6.0 min  {'COLLISION': 1368, 'SUCCESS': 465, 'TIMEOUT': 667}
+    2600/4750    7.0 min elapsed, ETA   5.8 min  {'COLLISION': 1418, 'SUCCESS': 477, 'TIMEOUT': 705}
+    2700/4750    7.2 min elapsed, ETA   5.5 min  {'COLLISION': 1501, 'SUCCESS': 492, 'TIMEOUT': 707}
+    2800/4750    7.4 min elapsed, ETA   5.2 min  {'COLLISION': 1546, 'SUCCESS': 527, 'TIMEOUT': 727}
+    2900/4750    7.7 min elapsed, ETA   4.9 min  {'COLLISION': 1607, 'SUCCESS': 548, 'TIMEOUT': 745}
+    3000/4750    8.0 min elapsed, ETA   4.7 min  {'COLLISION': 1635, 'SUCCESS': 586, 'TIMEOUT': 779}
+    3100/4750    8.2 min elapsed, ETA   4.4 min  {'COLLISION': 1683, 'SUCCESS': 621, 'TIMEOUT': 796}
+    3200/4750    8.5 min elapsed, ETA   4.1 min  {'COLLISION': 1731, 'SUCCESS': 654, 'TIMEOUT': 815}
+    3300/4750    8.7 min elapsed, ETA   3.8 min  {'COLLISION': 1785, 'SUCCESS': 675, 'TIMEOUT': 840}
+    3400/4750    9.2 min elapsed, ETA   3.6 min  {'COLLISION': 1820, 'SUCCESS': 708, 'TIMEOUT': 872}
+    3500/4750    9.6 min elapsed, ETA   3.4 min  {'COLLISION': 1862, 'SUCCESS': 720, 'TIMEOUT': 918}
+    3600/4750   10.0 min elapsed, ETA   3.2 min  {'COLLISION': 1914, 'SUCCESS': 722, 'TIMEOUT': 964}
+    3700/4750   10.4 min elapsed, ETA   2.9 min  {'COLLISION': 1969, 'SUCCESS': 726, 'TIMEOUT': 1005}
+    3800/4750   10.7 min elapsed, ETA   2.7 min  {'COLLISION': 2008, 'SUCCESS': 760, 'TIMEOUT': 1032}
+    3900/4750   11.0 min elapsed, ETA   2.4 min  {'COLLISION': 2035, 'SUCCESS': 821, 'TIMEOUT': 1044}
+    4000/4750   11.3 min elapsed, ETA   2.1 min  {'COLLISION': 2071, 'SUCCESS': 872, 'TIMEOUT': 1057}
+    4100/4750   11.5 min elapsed, ETA   1.8 min  {'COLLISION': 2148, 'SUCCESS': 874, 'TIMEOUT': 1078}
+    4200/4750   11.6 min elapsed, ETA   1.5 min  {'COLLISION': 2220, 'SUCCESS': 874, 'TIMEOUT': 1106}
+    4300/4750   11.8 min elapsed, ETA   1.2 min  {'COLLISION': 2308, 'SUCCESS': 884, 'TIMEOUT': 1108}
+    4400/4750   12.0 min elapsed, ETA   1.0 min  {'COLLISION': 2369, 'SUCCESS': 904, 'TIMEOUT': 1127}
+    4500/4750   12.3 min elapsed, ETA   0.7 min  {'COLLISION': 2441, 'SUCCESS': 910, 'TIMEOUT': 1149}
+    4600/4750   12.5 min elapsed, ETA   0.4 min  {'COLLISION': 2488, 'SUCCESS': 942, 'TIMEOUT': 1170}
+    4700/4750   12.9 min elapsed, ETA   0.1 min  {'COLLISION': 2537, 'SUCCESS': 956, 'TIMEOUT': 1207}
+    4750/4750   13.0 min elapsed, ETA   0.0 min  {'COLLISION': 2553, 'SUCCESS': 959, 'TIMEOUT': 1238}
+
+  DAF: 95 settings, 4750 runs  ->  /home/arl/nCBF3D/nCBF3D/tuning_gridsearch/results/poisson_1.5_4/daf/summary.csv
+    1  DAF_K3=4        DAF_EPS1=0.6      DAF_EPS2=1.4      n=50  crit  +28.0  succ  62.0% [0.48-0.74]  coll  34.0%  t/o   4.0%  t_succ   25.8s  v 1.24
+    2  DAF_K3=4        DAF_EPS1=0.9      DAF_EPS2=1.4      n=50  crit  +26.0  succ  62.0% [0.48-0.74]  coll  36.0%  t/o   2.0%  t_succ   26.5s  v 1.24
+    3  DAF_K3=8        DAF_EPS1=0.9      DAF_EPS2=1.4      n=50  crit  +22.0  succ  48.0% [0.35-0.61]  coll  26.0%  t/o  26.0%  t_succ   30.7s  v 1.01
+    4  DAF_K3=8        DAF_EPS1=0.45     DAF_EPS2=2        n=50  crit  +22.0  succ  50.0% [0.37-0.63]  coll  28.0%  t/o  22.0%  t_succ   29.6s  v 1.09
+    5  DAF_K3=4        DAF_EPS1=0.45     DAF_EPS2=1.4      n=50  crit  +18.0  succ  56.0% [0.42-0.69]  coll  38.0%  t/o   6.0%  t_succ   25.1s  v 1.26
+    6  DAF_K3=4        DAF_EPS1=0.6      DAF_EPS2=2        n=50  crit  +18.0  succ  58.0% [0.44-0.71]  coll  40.0%  t/o   2.0%  t_succ   25.8s  v 1.23
+    7  DAF_K3=4        DAF_EPS1=0.45     DAF_EPS2=2        n=50  crit  +16.0  succ  58.0% [0.44-0.71]  coll  42.0%  t/o   0.0%  t_succ   24.3s  v 1.29
+    8  DAF_K3=16       DAF_EPS1=0.6      DAF_EPS2=2        n=50  crit  +14.0  succ  30.0% [0.19-0.44]  coll  16.0%  t/o  54.0%  t_succ   34.2s  v 0.88
+    9  DAF_K3=8        DAF_EPS1=0.6      DAF_EPS2=2        n=50  crit  +14.0  succ  42.0% [0.29-0.56]  coll  28.0%  t/o  30.0%  t_succ   28.7s  v 1.04
+   10  DAF_K3=8        DAF_EPS1=0.9      DAF_EPS2=2        n=50  crit  +14.0  succ  42.0% [0.29-0.56]  coll  28.0%  t/o  30.0%  t_succ   29.3s  v 1.00
+

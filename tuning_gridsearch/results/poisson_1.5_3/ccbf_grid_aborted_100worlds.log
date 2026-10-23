@@ -1,0 +1,24 @@
+  ccbf: 80 settings x 100 worlds, 8000 runs to do
+  8000 runs on 16 workers (cpu)
+
+     100/8000    0.7 min elapsed, ETA  53.8 min  {'SUCCESS': 21, 'TIMEOUT': 79}
+     200/8000    1.4 min elapsed, ETA  52.7 min  {'SUCCESS': 56, 'TIMEOUT': 144}
+     300/8000    1.9 min elapsed, ETA  49.3 min  {'SUCCESS': 72, 'TIMEOUT': 228}
+     400/8000    2.4 min elapsed, ETA  46.5 min  {'SUCCESS': 72, 'TIMEOUT': 328}
+     500/8000    2.9 min elapsed, ETA  43.5 min  {'SUCCESS': 72, 'TIMEOUT': 428}
+     600/8000    3.5 min elapsed, ETA  43.2 min  {'SUCCESS': 80, 'TIMEOUT': 520}
+     700/8000    4.1 min elapsed, ETA  42.3 min  {'SUCCESS': 80, 'TIMEOUT': 620}
+     800/8000    4.5 min elapsed, ETA  40.8 min  {'SUCCESS': 81, 'TIMEOUT': 719}
+     900/8000    5.2 min elapsed, ETA  40.8 min  {'SUCCESS': 81, 'TIMEOUT': 819}
+    1000/8000    5.7 min elapsed, ETA  40.0 min  {'SUCCESS': 90, 'TIMEOUT': 910}
+    1100/8000    6.5 min elapsed, ETA  40.5 min  {'SUCCESS': 118, 'TIMEOUT': 982}
+    1200/8000    7.1 min elapsed, ETA  40.3 min  {'SUCCESS': 150, 'TIMEOUT': 1050}
+    1300/8000    7.7 min elapsed, ETA  39.7 min  {'SUCCESS': 170, 'TIMEOUT': 1130}
+    1400/8000    8.3 min elapsed, ETA  39.2 min  {'SUCCESS': 186, 'TIMEOUT': 1214}
+    1500/8000    9.0 min elapsed, ETA  39.0 min  {'SUCCESS': 238, 'TIMEOUT': 1262}
+    1600/8000    9.5 min elapsed, ETA  37.8 min  {'SUCCESS': 258, 'TIMEOUT': 1342}
+    1700/8000   10.0 min elapsed, ETA  37.1 min  {'SUCCESS': 282, 'TIMEOUT': 1418}
+    1800/8000   10.6 min elapsed, ETA  36.5 min  {'SUCCESS': 298, 'TIMEOUT': 1502}
+    1900/8000   11.1 min elapsed, ETA  35.8 min  {'SUCCESS': 310, 'TIMEOUT': 1590}
+/home/arl/miniconda3/envs/ncbf3d/lib/python3.12/multiprocessing/resource_tracker.py:279: UserWarning: resource_tracker: There appear to be 6 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '

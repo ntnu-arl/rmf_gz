@@ -1,0 +1,61 @@
+# Closed-loop grid search of the safety-filter parameters in the 2D simulation
+# (run_grid_search.py). Every parameter combination of a method is run on the
+# same pool of worlds, so the settings are compared pairwise.
+#
+# Parameters not listed under grid/fixed keep their node defaults; shared
+# problem parameters (DRONE_RADIUS, MAX_INPUT, FILTER_RATE, LOOKAHEAD, ...) come
+# from nCBF3D/H_config/sim_config_lidar.yaml and rmf_gz/ablation_config.yaml as in ROS.
+
+worlds:
+  n: 50
+  seed: 1000                  # world i is generated from seed + i (tuning pool;
+                              # evaluate the chosen settings on disjoint seeds)
+  poisson_radius: [1.5, 4.0]  # drawn uniformly per world
+  pillar_radius: 0.5          # rand_poisson2d.py default
+
+methods:
+  ccbf:
+    node: nCBF3D.G_ROS_interface.ROS2.sim_node_lidar_ccbf:CompositeCBFControlNode
+    baseline: {CCBF_KAPPA: 80.0, CCBF_POLE_0: -2.5, CCBF_ALPHA: 2.0}
+    grid:
+      # log-sum-exp temperature gamma/kappa (gamma = 60): 0.094 ... 0.006
+      # (kappa 80-1280 x pole_0 -1 ... -3.5 x alpha 0.5-4 on Poisson [1.5, 3]:
+      # success rose with kappa and |pole_0| up to the grid edge, alpha had no effect)
+      CCBF_KAPPA:  [640.0, 1280.0, 2560.0, 5120.0, 10240.0]
+      CCBF_POLE_0: [-2.5, -3.5, -5.0, -7.0]
+    fixed:
+      CCBF_ALPHA: 1.0
+    # h ~ nu_1 = nu_0_dot - pole_0 nu_0 with h_dot + alpha h >= 0 gives the characteristic
+    # polynomial (s - pole_0)(s + alpha): both roots must be real and negative
+    constraints: ["CCBF_POLE_0 < 0", "CCBF_ALPHA > 0"]
+    # best in results/poisson_1.5_4 (50 worlds) by J = S - 3 C (success, collision rate);
+    # written to nCBF3D/H_config/sim_config_lidar.yaml and marked in the LaTeX table
+    # (make_tables.py) and contour plot (plot_contours.py)
+    selected: {CCBF_KAPPA: 10240.0, CCBF_POLE_0: -2.5, CCBF_ALPHA: 1.0}
+
+  daf:
+    node: nCBF3D.G_ROS_interface.ROS2.sim_node_lidar_daf:DAFControlNode
+    baseline: {DAF_K3: 5.0, DAF_EPS1: 1.5, DAF_EPS2: 4.0}
+    # Smaili et al., CDC 2025: eps = 0.06, eps1 = 0.3, eps2 = 0.6, k3 = 8 (Sec. V), and
+    # eq. (12) 0 < eps1 < eps2 < min(h, rho) - (R + eps). In the tuning worlds the
+    # workspace-wide bound is negative (-0.51 ... -0.62 m: the narrowest gaps are below
+    # 2 (R + eps)), so no eps2 > 0 satisfies (12); locally, h = half the gap to the
+    # nearest pillar or wall, it holds at 22 % of the pillars for eps2 = 0.25, 5 % for
+    # 0.6 and 0.3 % for 1.1. As the paper prescribes, Algorithm 1 shrinks the
+    # parameters where it is violated; only 0 < eps1 < eps2 is enforced. k3 is not
+    # bound by (12) (k3 = 2 was worst in a 4x3x4 grid, collisions fell up to 16).
+    # one grid around the paper's values (k3 = 8, eps1 = 0.3, eps2 = 0.6) reaching
+    # the region where earlier, coarser searches did best (k3 2-4, eps1 0.45-0.6,
+    # eps2 1.4-1.8) and one step past it
+    grid:
+      DAF_K3:   [2.0, 4.0, 8.0, 16.0, 32.0]
+      DAF_EPS1: [0.15, 0.3, 0.45, 0.6, 0.9]
+      DAF_EPS2: [0.3, 0.6, 1.0, 1.4, 2.0, 2.5, 3.0]
+    fixed:
+      DAF_EPS: 0.06
+    constraints: ["0 < DAF_EPS1 < DAF_EPS2"]
+    # the values of the paper (Sec. V), marked in the contour plot
+    official: {DAF_K3: 8.0, DAF_EPS1: 0.3, DAF_EPS2: 0.6}
+    # best in results/poisson_1.5_4 (50 worlds) by J = S - 3 C (success, collision rate);
+    # written to nCBF3D/H_config/sim_config_lidar.yaml
+    selected: {DAF_K3: 16.0, DAF_EPS1: 0.6, DAF_EPS2: 2.0}
